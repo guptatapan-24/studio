@@ -14,6 +14,7 @@ type GolfCanvasProps = {
 
 const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  
   const state = useRef({
     isBallMoving: false,
     isCharging: false,
@@ -26,6 +27,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     isHoleCompleted: false,
   }).current;
 
+  // Memoize callbacks to prevent re-creating functions on every render
   const memoizedOnStroke = useCallback(onStroke, [onStroke]);
   const memoizedOnHoleComplete = useCallback(() => {
     if (!state.isHoleCompleted) {
@@ -42,6 +44,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
     const currentMount = mountRef.current;
 
+    // Scene Setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xD3D3D3); 
     scene.fog = new THREE.Fog(0xD3D3D3, 20, 50);
@@ -54,6 +57,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     renderer.shadowMap.enabled = true;
     currentMount.appendChild(renderer.domElement);
 
+    // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
@@ -61,6 +65,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     controls.enablePan = true;
 
 
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
@@ -71,6 +76,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     dirLight.shadow.mapSize.height = 2048;
     scene.add(dirLight);
 
+    // Game Objects
     const groundGeo = new THREE.PlaneGeometry(30, 50);
     const groundMat = new THREE.MeshStandardMaterial({ color: '#7CFC00', roughness: 0.8 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -104,26 +110,32 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       scene.add(obstacle);
       obstacles.push(obstacle);
     });
-
+    
+    // Aiming indicator
     const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
     const aimLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
     const aimLine = new THREE.Line(aimLineGeo, aimLineMat);
     scene.add(aimLine);
 
 
+    // --- Event Handlers ---
     const onKeyDown = (event: KeyboardEvent) => {
         if (state.isBallMoving || state.isHoleCompleted) return;
-        event.preventDefault();
-        event.stopPropagation();
         
         switch(event.key) {
             case 'ArrowLeft':
+                event.preventDefault();
+                event.stopPropagation();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 60);
                 break;
             case 'ArrowRight':
+                event.preventDefault();
+                event.stopPropagation();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 60);
                 break;
             case ' ': // Spacebar
+                event.preventDefault();
+                event.stopPropagation();
                 if (!state.isCharging) {
                     state.isCharging = true;
                     state.chargeStartTime = Date.now();
@@ -161,13 +173,14 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const handleResize = () => {
       camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+      renderer.setSize(currentMount.clientWidth / currentMount.clientHeight);
     };
 
     const handleClick = () => {
       currentMount.focus();
     };
 
+    currentMount.tabIndex = 0; // Make the div focusable
     currentMount.addEventListener('click', handleClick);
     currentMount.addEventListener('keydown', onKeyDown);
     currentMount.addEventListener('keyup', onKeyUp);
@@ -178,19 +191,22 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
+      // Update power bar
       if(state.isCharging) {
           const chargeDuration = Date.now() - state.chargeStartTime;
           state.power = Math.min(chargeDuration / 20, 100);
           setPower(state.power);
       }
 
+      // Update aim indicator
       if (state.ballMesh) {
         aimLine.visible = !state.isBallMoving && !state.isHoleCompleted;
         if(aimLine.visible) {
             aimLine.geometry.setFromPoints([state.ballMesh.position, state.ballMesh.position.clone().add(state.aimDirection.clone().multiplyScalar(3))]);
         }
       }
-
+      
+      // Animate ball movement and physics
       if (state.isBallMoving && state.ballMesh) {
         state.ballMesh.position.add(state.ballVelocity);
         state.ballVelocity.multiplyScalar(0.98); // friction
@@ -212,12 +228,14 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
             }
         });
 
-        if (state.ballVelocity.lengthSq() < 0.0001) {
+        // Check if ball stopped
+        if (state.ballVelocity.lengthSq() < 0.00001) {
             state.ballVelocity.set(0, 0, 0);
             state.isBallMoving = false;
         }
       }
       
+      // Check for goal
       if (state.ballMesh && state.holeMesh && !state.isHoleCompleted) {
         const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
         if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.01) { // Ball must be slow to enter hole
@@ -243,6 +261,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
     animate();
 
+    // --- Cleanup ---
     return () => {
       cancelAnimationFrame(animationFrameId);
       currentMount.removeEventListener('click', handleClick);
@@ -253,11 +272,23 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         currentMount.removeChild(renderer.domElement);
       }
       renderer.dispose();
+      scene.children.forEach(child => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
       scene.clear();
     };
   }, [level, setPower, memoizedOnStroke, memoizedOnHoleComplete, state]);
 
-  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" tabIndex={0} />;
+  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
 
 export default GolfCanvas;
+
+    
