@@ -175,7 +175,7 @@ class Game {
             return;
         }
 
-        const powerMultiplier = 0.005; // Reduced power sensitivity
+        const powerMultiplier = 0.0025; // Further reduced power sensitivity
         this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
         this.isBallMoving = true;
         this.onStroke();
@@ -242,8 +242,8 @@ class Game {
 
     // --- Apply friction if on any surface ---
     if(onSurface) {
-        this.ballVelocity.x *= 0.98;
-        this.ballVelocity.z *= 0.98;
+        this.ballVelocity.x *= 0.96;
+        this.ballVelocity.z *= 0.96;
     }
   }
 
@@ -378,5 +378,3 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
-
-    
