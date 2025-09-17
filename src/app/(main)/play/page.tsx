@@ -15,10 +15,12 @@ const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
 
 export default function PlayPage() {
   const [levelIndex, setLevelIndex] = useState(0);
-  const [currentLevel, setCurrentLevel] = useState<Level>(levels[levelIndex]);
   const [strokes, setStrokes] = useState(0);
   const [power, setPower] = useState(0);
   const [isHoleComplete, setIsHoleComplete] = useState(false);
+  const [gameKey, setGameKey] = useState(Date.now()); // Used to force a re-render of the canvas
+
+  const currentLevel = levels[levelIndex];
 
   const handleStroke = () => {
     if (isHoleComplete) return;
@@ -26,30 +28,17 @@ export default function PlayPage() {
   };
 
   const handleHoleComplete = () => {
-    if (!isHoleComplete) { // prevent multiple triggers
+    if (!isHoleComplete) {
       setIsHoleComplete(true);
     }
   };
 
   const handleNextLevel = () => {
-    const nextLevelIndex = levelIndex + 1;
-    if (nextLevelIndex < levels.length) {
-      setLevelIndex(nextLevelIndex);
-      setCurrentLevel(levels[nextLevelIndex]);
-    } else {
-      // Loop back to the first level
-      setLevelIndex(0);
-      setCurrentLevel(levels[0]);
-    }
+    const nextLevelIndex = (levelIndex + 1) % levels.length;
+    setLevelIndex(nextLevelIndex);
     setStrokes(0);
     setIsHoleComplete(false);
-  };
-  
-  const handleReset = () => {
-    // This will cause the GolfCanvas to re-mount due to the key change
-    setCurrentLevel({ ...currentLevel });
-    setStrokes(0);
-    setIsHoleComplete(false);
+    setGameKey(Date.now()); // Change the key to force re-mount
   };
 
   return (
@@ -57,11 +46,12 @@ export default function PlayPage() {
       <GameUI level={currentLevel.id} par={currentLevel.par} strokes={strokes} power={power} />
         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
             <GolfCanvas
-                key={levelIndex} // Re-mount component on level change to reset its internal state
+                key={gameKey} // Re-mount component on level change
                 level={currentLevel}
                 onStroke={handleStroke}
                 onHoleComplete={handleHoleComplete}
                 setPower={setPower}
+                isGamePaused={isHoleComplete}
             />
         </Suspense>
       {isHoleComplete && (
@@ -87,5 +77,3 @@ export default function PlayPage() {
     </div>
   );
 }
-
-    
