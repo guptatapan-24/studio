@@ -44,6 +44,24 @@ const formSchema = z.object({
   par: z.coerce.number().int().min(1, 'Par must be at least 1.'),
 });
 
+// Helper function for retrying promises
+async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 2000, finalErr: string): Promise<T> {
+  let lastError: Error | undefined;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      lastError = e;
+      if (i < retries - 1) {
+        // Optional: Check for specific retryable errors, e.g., e.message.includes('503')
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw new Error(finalErr);
+}
+
+
 export default function DesignPage() {
   const [isDesigning, setIsDesigning] = useState(false);
   const [isVisualizing, setIsVisualizing] = useState(false);
@@ -67,7 +85,12 @@ export default function DesignPage() {
     setVisualizationResult(null);
     setError(null);
     try {
-      const output = await designCourse(values);
+       const output = await retry(
+        () => designCourse(values),
+        3,
+        2000,
+        "The AI service is currently busy. Please try again in a moment."
+      );
       setDesignResult(output);
     } catch (e) {
       setError(e instanceof Error ? e.message : "An unknown error occurred.");
@@ -81,7 +104,12 @@ export default function DesignPage() {
     setIsVisualizing(true);
     setError(null);
     try {
-        const output = await visualizeCourse({ courseDescription: designResult.courseDesign });
+        const output = await retry(
+            () => visualizeCourse({ courseDescription: designResult.courseDesign }),
+            3,
+            2000,
+            "The AI service is currently busy. Please try again in a moment."
+        );
         const level: Level = {
             id: 99, // Custom level ID
             name: "AI Generated Course",
@@ -279,3 +307,5 @@ export default function DesignPage() {
     </div>
   );
 }
+
+    
