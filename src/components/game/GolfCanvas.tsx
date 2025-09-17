@@ -198,18 +198,20 @@ class Game {
     const groundLevel = 0.15; // Ball radius
     let onSurface = false;
 
-    // Ground collision
-    if (this.ballMesh.position.y < groundLevel) {
+    // --- Gravity ---
+    this.ballVelocity.add(this.gravity);
+    
+    // --- Ground collision & friction ---
+    if (this.ballMesh.position.y < groundLevel && this.ballVelocity.y < 0) {
         this.ballMesh.position.y = groundLevel;
         this.ballVelocity.y = -this.ballVelocity.y * 0.3; // Dampen bounce on ground
         onSurface = true;
     }
 
-    // Obstacle collision
+    // --- Obstacle collision ---
     for (const obstacle of this.obstacles) {
         obstacle.updateWorldMatrix(true, false);
         const inverseObstacleMatrix = new THREE.Matrix4().copy(obstacle.matrixWorld).invert();
-
         const localBallPosition = this.ballMesh.position.clone().applyMatrix4(inverseObstacleMatrix);
         
         const obstacleAABB = new THREE.Box3();
@@ -222,20 +224,27 @@ class Game {
             
             const collisionNormalLocal = localBallPosition.clone().sub(closestPoint).normalize();
             
+            // Transform the collision normal back to world space
             const collisionNormalWorld = collisionNormalLocal.clone().transformDirection(obstacle.matrixWorld);
 
+            // Reflect velocity
             this.ballVelocity.reflect(collisionNormalWorld);
             this.ballVelocity.multiplyScalar(0.7); // Energy loss on collision
 
+            // Push the ball out of the obstacle slightly to prevent sticking
             this.ballMesh.position.add(collisionNormalWorld.multiplyScalar(0.01));
             
             if (collisionNormalWorld.y > 0) {
               onSurface = true;
             }
-            // No early return, check all obstacles
         }
     }
-    return onSurface;
+
+    // --- Apply friction if on any surface ---
+    if(onSurface) {
+        this.ballVelocity.x *= 0.98;
+        this.ballVelocity.z *= 0.98;
+    }
   }
 
   private update() {
@@ -253,22 +262,16 @@ class Game {
         const startPoint = this.ballMesh.position;
         const endPoint = startPoint.clone().add(this.aimDirection.clone().multiplyScalar(3));
         this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
+        this.aimLine.geometry.attributes.position.needsUpdate = true;
     }
     
     if (this.isBallMoving) {
-      // Apply gravity
-      this.ballVelocity.add(this.gravity);
-
+      // Apply new position
       this.ballMesh.position.add(this.ballVelocity);
       
-      const onSurface = this.checkCollisions();
-
-      // Apply friction only when on a surface
-      if(onSurface) {
-        this.ballVelocity.x *= 0.98;
-        this.ballVelocity.z *= 0.98;
-      }
-
+      this.checkCollisions();
+      
+      // Stop condition
       if (this.ballVelocity.lengthSq() < 0.0001) {
           this.ballVelocity.set(0, 0, 0);
           this.isBallMoving = false;
