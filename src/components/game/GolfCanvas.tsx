@@ -380,11 +380,9 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       game.cleanup();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level]);
+  }, [level]); // Key change: This effect now ONLY re-runs if the level itself changes.
 
   return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
 
 export default GolfCanvas;
-
-    
