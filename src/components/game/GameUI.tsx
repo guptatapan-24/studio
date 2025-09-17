@@ -38,7 +38,7 @@ export function GameUI({ level, par, strokes, power, onReset, onGoToLevels, isCu
             <div className="h-10 border-l border-border"></div>
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Hole</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Level</p>
                 <p className="text-xl sm:text-2xl font-bold">{isCustomLevel ? "AI" : level}</p>
               </div>
               <div className="h-10 border-l border-border"></div>
