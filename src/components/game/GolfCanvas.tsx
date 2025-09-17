@@ -150,7 +150,7 @@ class Game {
             event.preventDefault();
             this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
             break;
-        case 'p':
+        case ' ':
             event.preventDefault();
             if (!this.isCharging) {
                 this.isCharging = true;
@@ -162,7 +162,7 @@ class Game {
   private handleKeyUp = (event: KeyboardEvent) => {
     if (this.isGamePaused() || this.isHoleCompleted) return;
     
-    if (event.key.toLowerCase() === 'p' && this.isCharging) {
+    if (event.key.toLowerCase() === ' ' && this.isCharging) {
         event.preventDefault();
         
         if (this.chargePower < 5) { // Cancel shot if not enough power
@@ -325,3 +325,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
