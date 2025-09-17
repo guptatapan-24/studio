@@ -8,7 +8,7 @@ import { GolfBallIcon } from '@/components/icons/GolfBallIcon';
 import { Header } from '@/components/layout/Header';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course-2');
+  const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course');
 
   return (
     <div className="flex flex-col min-h-dvh bg-background">
