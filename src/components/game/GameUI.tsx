@@ -37,7 +37,7 @@ export function GameUI({ level, par, strokes, power, onReset }: GameUIProps) {
         </Card>
       </div>
       <div className="absolute top-4 right-4 z-10">
-        <Button variant="secondary" size="icon" onClick={onReset} aria-label="Reset Level">
+        <Button variant="secondary" size="icon" onClick={onReset} aria-label="Reset Level" tabIndex={-1}>
             <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
