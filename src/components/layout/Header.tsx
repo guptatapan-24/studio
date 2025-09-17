@@ -11,21 +11,21 @@ export function Header() {
             <GolfBallIcon className="h-6 w-6" />
             <span className="font-bold sm:inline-block">Web Golf</span>
           </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <Link
+              href="/levels"
+              className="text-foreground/60 transition-colors hover:text-foreground/80"
+            >
+              Levels
+            </Link>
+            <Link
+              href="/design"
+              className="text-foreground/60 transition-colors hover:text-foreground/80"
+            >
+              Design Your Own Golf Course
+            </Link>
+          </nav>
         </div>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          <Link
-            href="/levels"
-            className="text-foreground/60 transition-colors hover:text-foreground/80"
-          >
-            Levels
-          </Link>
-          <Link
-            href="/design"
-            className="text-foreground/60 transition-colors hover:text-foreground/80"
-          >
-            Design
-          </Link>
-        </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <Button asChild>
             <Link href="/levels">Play Now</Link>
