@@ -79,7 +79,7 @@ export default function PlayPage() {
       const currentLevelId = level?.id ?? 0;
       if (currentLevelId > 0 && currentLevelId !== 99) { // 99 is custom
         const currentUnlocked = parseInt(localStorage.getItem('maxLevelUnlocked') || '1');
-        if (currentLevelId >= currentUnlocked) {
+        if (currentLevelId >= currentUnlocked && currentLevelId < levels.length) {
             localStorage.setItem('maxLevelUnlocked', (currentLevelId + 1).toString());
         }
       }
