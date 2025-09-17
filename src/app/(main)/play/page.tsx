@@ -26,7 +26,9 @@ export default function PlayPage() {
   };
 
   const handleHoleComplete = () => {
-    setIsHoleComplete(true);
+    if (!isHoleComplete) { // prevent multiple triggers
+      setIsHoleComplete(true);
+    }
   };
 
   const handleNextLevel = () => {
@@ -85,3 +87,5 @@ export default function PlayPage() {
     </div>
   );
 }
+
+    

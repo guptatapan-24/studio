@@ -46,6 +46,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
+    // Use right-click for orbit, leave left-click for our aiming
+    controls.mouseButtons = { LEFT: 2, MIDDLE: 1, RIGHT: 0 }; // THREE.MOUSE.ROTATE is 0
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
@@ -101,7 +103,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const mouse = new THREE.Vector2();
 
     const onMouseDown = (event: MouseEvent) => {
-      if (state.isBallMoving) return;
+      if (state.isBallMoving || event.button !== 0) return; // Only allow aiming with left-click
 
       mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
       mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
@@ -134,7 +136,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
     
     const onMouseUp = (event: MouseEvent) => {
-      if (!state.isAiming || !state.ballMesh) return;
+      if (!state.isAiming || !state.ballMesh || event.button !== 0) return;
       state.isAiming = false;
       controls.enabled = true;
       aimLine.visible = false;
@@ -158,6 +160,36 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       setPower(0);
     };
 
+    const onKeyDown = (event: KeyboardEvent) => {
+        if (state.isBallMoving) return;
+        const nudgePower = 0.01;
+        let didNudge = false;
+
+        switch(event.key) {
+            case 'ArrowUp':
+                state.ballVelocity.z -= nudgePower;
+                didNudge = true;
+                break;
+            case 'ArrowDown':
+                state.ballVelocity.z += nudgePower;
+                didNudge = true;
+                break;
+            case 'ArrowLeft':
+                state.ballVelocity.x -= nudgePower;
+                didNudge = true;
+                break;
+            case 'ArrowRight':
+                state.ballVelocity.x += nudgePower;
+                didNudge = true;
+                break;
+        }
+
+        if (didNudge) {
+            state.isBallMoving = true;
+            memoizedOnStroke();
+        }
+    }
+
     const handleResize = () => {
       camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
@@ -167,6 +199,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     currentMount.addEventListener('mousedown', onMouseDown);
     currentMount.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('keydown', onKeyDown);
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
@@ -183,13 +216,15 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       }
       
       const distToHole = state.ballMesh?.position.distanceTo(state.holeMesh!.position) || Infinity;
-      if (distToHole < level.holeRadius && !state.isBallMoving) {
+      if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.001) {
+        state.isBallMoving = false;
         state.ballVelocity.set(0,0,0);
-        // Animate ball falling into hole
-        const fallSpeed = (state.holeMesh!.position.y - state.ballMesh!.position.y) * 0.1;
-        state.ballMesh!.position.y += fallSpeed;
-        if(Math.abs(state.ballMesh!.position.y - state.holeMesh!.position.y) < 0.01) {
-            memoizedOnHoleComplete();
+        
+        // Simple animation to sink the ball
+        if (state.ballMesh.position.y > state.holeMesh.position.y) {
+           state.ballMesh.position.y -= 0.01;
+        } else {
+           memoizedOnHoleComplete();
         }
       }
 
@@ -203,6 +238,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('keydown', onKeyDown);
       currentMount.removeEventListener('mousedown', onMouseDown);
       currentMount.removeEventListener('mousemove', onMouseMove);
       if (renderer.domElement.parentNode === currentMount) {
@@ -217,3 +253,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
