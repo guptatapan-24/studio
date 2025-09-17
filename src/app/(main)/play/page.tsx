@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, Suspense, useEffect } from 'react';
@@ -22,6 +23,21 @@ export default function PlayPage() {
   const [power, setPower] = useState(0);
   const [isHoleComplete, setIsHoleComplete] = useState(false);
   const [gameKey, setGameKey] = useState(Date.now());
+  const isCustomLevel = searchParams.get('level') === 'custom';
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isCustomLevel) {
+        router.push('/design');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCustomLevel, router]);
 
   useEffect(() => {
     const levelId = searchParams.get('level');

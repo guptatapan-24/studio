@@ -177,7 +177,7 @@ class Game {
             return;
         }
 
-        const powerMultiplier = 0.0025; // Further reduced power sensitivity
+        const powerMultiplier = 0.0025;
         this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
         this.isBallMoving = true;
         this.onStroke();
