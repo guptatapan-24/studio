@@ -46,7 +46,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
-    controls.mouseButtons = { LEFT: THREE.MOUSE.RIGHT, MIDDLE: THREE.MOUSE.MIDDLE, RIGHT: -1 }; 
+    controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.MIDDLE, RIGHT: THREE.MOUSE.RIGHT }; 
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
@@ -206,12 +206,14 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      if (state.ballVelocity.lengthSq() > 0.00001) {
+      if (state.isBallMoving) {
         state.ballMesh?.position.add(state.ballVelocity);
         state.ballVelocity.multiplyScalar(0.98);
-      } else {
-        state.ballVelocity.set(0, 0, 0);
-        if(state.isBallMoving) state.isBallMoving = false;
+
+        if (state.ballVelocity.lengthSq() < 0.00001) {
+            state.ballVelocity.set(0, 0, 0);
+            state.isBallMoving = false;
+        }
       }
       
       const distToHole = state.ballMesh?.position.distanceTo(state.holeMesh!.position) || Infinity;
