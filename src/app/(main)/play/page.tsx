@@ -28,7 +28,7 @@ export default function PlayPage() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isCustomLevel) {
-        router.push('/design');
+        router.replace('/design');
       }
     };
 
