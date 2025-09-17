@@ -42,7 +42,7 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-primary-foreground">
+        <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
           {heroImage && (
             <Image
               src={heroImage.imageUrl}
@@ -53,17 +53,17 @@ export default function Home() {
               data-ai-hint={heroImage.imageHint}
             />
           )}
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/40" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-shadow-lg">
               CloneFest 2025
             </h1>
-            <p className="mt-4 text-lg md:text-xl text-primary-foreground/90">
+            <p className="mt-4 text-lg md:text-xl text-white/90 text-shadow">
               Reimagining a C-based Minigolf Classic. Porting an interactive 3D
               minigolf hole to the web using Three.js.
             </p>
             <div className="mt-8 flex justify-center">
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg">
                 <Link href="/levels">
                   Click to Play <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
