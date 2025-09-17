@@ -6,6 +6,12 @@
       "description": "A beautiful view of a golf course on a sunny day, used for the hero section.",
       "imageUrl": "https://picsum.photos/seed/golf-hero/1200/800",
       "imageHint": "golf course green"
+    },
+    {
+      "id": "hero-golf-course-2",
+      "description": "A different beautiful view of a golf course on a sunny day, used for the hero section.",
+      "imageUrl": "https://picsum.photos/seed/golf-hero-2/1200/800",
+      "imageHint": "golf course sunset"
     }
   ]
 }
