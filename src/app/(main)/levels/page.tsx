@@ -11,11 +11,11 @@ import { Badge } from '@/components/ui/badge';
 
 export default function LevelsPage() {
   const router = useRouter();
-  const [maxLevelUnlocked, setMaxLevelUnlocked] = useState(1);
+  const [completedLevels, setCompletedLevels] = useState<number[]>([]);
 
   useEffect(() => {
-    const unlocked = parseInt(localStorage.getItem('maxLevelUnlocked') || '1');
-    setMaxLevelUnlocked(unlocked);
+    // This is a placeholder for if you wanted to track completed levels.
+    // For now, we just unlock everything.
   }, []);
 
   return (
@@ -24,19 +24,19 @@ export default function LevelsPage() {
         <div className="text-center mb-10">
             <h1 className="text-4xl font-bold tracking-tight">Select a Level</h1>
             <p className="mt-2 text-lg text-muted-foreground">
-                Complete levels to unlock new ones. Good luck!
+                All levels are now unlocked. Good luck!
             </p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {levels.map((level) => {
-            const isUnlocked = level.id <= maxLevelUnlocked;
-            const isCompleted = level.id < maxLevelUnlocked;
+            const isUnlocked = true; // All levels are unlocked
+            const isCompleted = false; // You could implement completion tracking here if needed
 
             return (
               <Card 
                 key={level.id} 
-                className={`transition-all ${isUnlocked ? 'hover:border-primary' : 'bg-muted/50'}`}
+                className={`transition-all hover:border-primary`}
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -44,25 +44,17 @@ export default function LevelsPage() {
                       <CardDescription>Hole {level.id}</CardDescription>
                       <CardTitle>{level.name}</CardTitle>
                     </div>
-                    {isCompleted ? (
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                        <CheckCircle className="mr-1.5 h-4 w-4" />
-                        Done
-                      </Badge>
-                    ) : (
-                      <Badge variant={isUnlocked ? 'outline' : 'secondary'}>Par {level.par}</Badge>
-                    )}
+                    <Badge variant={'outline'}>Par {level.par}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <Button 
                     asChild
-                    disabled={!isUnlocked} 
                     className="w-full"
                   >
                     <Link href={`/play?level=${level.id}`}>
-                      {isUnlocked ? <Play className="mr-2" /> : <Lock className="mr-2" />}
-                      {isUnlocked ? (isCompleted ? 'Play Again' : 'Play') : 'Locked'}
+                      <Play className="mr-2" />
+                      Play
                     </Link>
                   </Button>
                 </CardContent>
