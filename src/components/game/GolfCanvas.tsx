@@ -175,7 +175,7 @@ class Game {
             return;
         }
 
-        const powerMultiplier = 0.01; // Reduced power sensitivity
+        const powerMultiplier = 0.005; // Reduced power sensitivity
         this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
         this.isBallMoving = true;
         this.onStroke();
@@ -378,3 +378,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
