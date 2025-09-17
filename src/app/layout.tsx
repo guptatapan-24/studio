@@ -21,6 +21,12 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <style>{`
+          /* Hide Next.js development indicator */
+          div[style*="z-index:9999999999"] {
+            display: none !important;
+          }
+        `}</style>
       </head>
       <body className="font-body antialiased">
         {children}
