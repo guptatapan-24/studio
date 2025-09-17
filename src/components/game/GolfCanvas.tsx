@@ -23,13 +23,22 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     ballVelocity: new THREE.Vector3(),
     ballMesh: null as THREE.Mesh | null,
     holeMesh: null as THREE.Mesh | null,
+    isHoleCompleted: false,
   }).current;
 
   const memoizedOnStroke = useCallback(onStroke, [onStroke]);
-  const memoizedOnHoleComplete = useCallback(onHoleComplete, [onHoleComplete]);
+  const memoizedOnHoleComplete = useCallback(() => {
+    if (!state.isHoleCompleted) {
+        state.isHoleCompleted = true;
+        onHoleComplete();
+    }
+  }, [onHoleComplete, state]);
 
   useEffect(() => {
     if (!mountRef.current) return;
+    
+    // Reset hole completed state on level change
+    state.isHoleCompleted = false;
 
     const currentMount = mountRef.current;
 
@@ -103,8 +112,11 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
 
     const onKeyDown = (event: KeyboardEvent) => {
-        if (state.isBallMoving) return;
+        if (state.isBallMoving || state.isHoleCompleted) return;
+        
+        // Let's stop other elements from getting this event
         event.preventDefault();
+        event.stopPropagation();
 
         switch(event.key) {
             case 'ArrowLeft':
@@ -123,7 +135,11 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     }
 
     const onKeyUp = (event: KeyboardEvent) => {
+        if (state.isHoleCompleted) return;
+        
         event.preventDefault();
+        event.stopPropagation();
+        
         if (event.key === ' ' && state.isCharging && state.ballMesh) {
             
             state.isCharging = false;
@@ -131,7 +147,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
             const chargeDuration = Date.now() - state.chargeStartTime;
             const power = Math.min(chargeDuration / 20, 100); // Max power at 2 seconds
             
-            if (power < 5) {
+            if (power < 5) { // Ignore very small taps
                 setPower(0);
                 state.power = 0;
                 return;
@@ -156,8 +172,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
 
     currentMount.addEventListener('click', handleClick);
-    currentMount.addEventListener('keydown', onKeyDown);
-    currentMount.addEventListener('keyup', onKeyUp);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
@@ -172,7 +188,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       }
 
       if (state.ballMesh) {
-        aimLine.visible = !state.isBallMoving;
+        aimLine.visible = !state.isBallMoving && !state.isHoleCompleted;
         if(aimLine.visible) {
             aimLine.geometry.setFromPoints([state.ballMesh.position, state.ballMesh.position.clone().add(state.aimDirection.clone().multiplyScalar(3))]);
         }
@@ -188,13 +204,15 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         }
       }
       
-      if (state.ballMesh && state.holeMesh) {
+      if (state.ballMesh && state.holeMesh && !state.isHoleCompleted) {
         const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
         if (distToHole < level.holeRadius && !state.isBallMoving) {
           state.ballVelocity.set(0,0,0);
+          state.isBallMoving = true; // prevent shooting while ball is sinking
           
           // Simple animation to sink the ball
-          if (state.ballMesh.position.y > state.holeMesh.position.y - 0.1) {
+          const sinkTargetY = state.holeMesh.position.y - 0.2;
+          if (state.ballMesh.position.y > sinkTargetY) {
              state.ballMesh.position.y -= 0.01;
           } else {
              memoizedOnHoleComplete();
@@ -211,8 +229,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     return () => {
       cancelAnimationFrame(animationFrameId);
       currentMount.removeEventListener('click', handleClick);
-      currentMount.removeEventListener('keydown', onKeyDown);
-      currentMount.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
       if (renderer.domElement.parentNode === currentMount) {
         currentMount.removeChild(renderer.domElement);
