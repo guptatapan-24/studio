@@ -113,6 +113,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 60);
                 break;
             case ' ': // Spacebar
+                event.preventDefault();
                 if (!state.isCharging) {
                     state.isCharging = true;
                     state.chargeStartTime = Date.now();
@@ -123,6 +124,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
     const onKeyUp = (event: KeyboardEvent) => {
         if (event.key === ' ' && state.isCharging && state.ballMesh) {
+            event.preventDefault();
             state.isCharging = false;
             
             const chargeDuration = Date.now() - state.chargeStartTime;
