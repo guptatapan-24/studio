@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Level } from '@/lib/levels';
@@ -150,7 +150,7 @@ class Game {
             event.preventDefault();
             this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
             break;
-        case ' ':
+        case ' ': // Changed from 'p' to spacebar
             event.preventDefault();
             if (!this.isCharging) {
                 this.isCharging = true;
@@ -162,7 +162,7 @@ class Game {
   private handleKeyUp = (event: KeyboardEvent) => {
     if (this.isGamePaused() || this.isHoleCompleted) return;
     
-    if (event.key.toLowerCase() === ' ' && this.isCharging) {
+    if (event.key.toLowerCase() === ' ' && this.isCharging) { // Changed from 'p' to spacebar
         event.preventDefault();
         
         if (this.chargePower < 5) { // Cancel shot if not enough power
@@ -172,7 +172,7 @@ class Game {
             return;
         }
 
-        const powerMultiplier = 0.02; // Reduced power sensitivity
+        const powerMultiplier = 0.01; // Reduced power sensitivity
         this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
         this.isBallMoving = true;
         this.onStroke();
@@ -189,22 +189,48 @@ class Game {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
   };
-
-  private getCollisionNormal(ball: THREE.Mesh, obstacle: THREE.Mesh): THREE.Vector3 | null {
-    const ballBox = new THREE.Box3().setFromObject(ball);
-    const obstacleBox = new THREE.Box3().setFromObject(obstacle);
-    if (!ballBox.intersectsBox(obstacleBox)) return null;
-
-    const ballCenter = new THREE.Vector3();
-    ballBox.getCenter(ballCenter);
+  
+  private checkCollisions() {
+    const ballRadius = (this.ballMesh.geometry as THREE.SphereGeometry).parameters.radius;
     
-    const closestPoint = new THREE.Vector3();
-    obstacleBox.clampPoint(ballCenter, closestPoint);
-    
-    const normal = ballCenter.sub(closestPoint).normalize();
-    return normal;
-}
+    for (const obstacle of this.obstacles) {
+        // We use a Box3 helper, but we will transform the ball into the obstacle's local space
+        // This is a way to handle Oriented Bounding Box (OBB) collision
+        const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+        obstacle.updateWorldMatrix(true, false);
+        const inverseObstacleMatrix = new THREE.Matrix4().copy(obstacle.matrixWorld).invert();
 
+        // Put the ball in the obstacle's local space
+        const localBallPosition = this.ballMesh.position.clone().applyMatrix4(inverseObstacleMatrix);
+        
+        const obstacleAABB = new THREE.Box3().setFromObject(obstacle, true);
+        const geometry = obstacle.geometry as THREE.BoxGeometry;
+        obstacleAABB.min.set(-geometry.parameters.width / 2, -geometry.parameters.height / 2, -geometry.parameters.depth / 2);
+        obstacleAABB.max.set(geometry.parameters.width / 2, geometry.parameters.height / 2, geometry.parameters.depth / 2);
+
+
+        // Check for intersection in local space
+        if (obstacleAABB.intersectsSphere(new THREE.Sphere(localBallPosition, ballRadius))) {
+            const closestPoint = new THREE.Vector3();
+            obstacleAABB.clampPoint(localBallPosition, closestPoint);
+            
+            const collisionNormalLocal = localBallPosition.clone().sub(closestPoint).normalize();
+            
+            // Now, transform the normal back to world space
+            const collisionNormalWorld = collisionNormalLocal.clone().transformDirection(obstacle.matrixWorld);
+
+            // Reflect velocity
+            this.ballVelocity.reflect(collisionNormalWorld);
+            this.ballVelocity.multiplyScalar(0.7); // Energy loss
+
+            // Move the ball slightly out of the obstacle to prevent sticking
+            this.ballMesh.position.add(collisionNormalWorld.multiplyScalar(0.01));
+
+            // We only handle one collision per frame for simplicity
+            return;
+        }
+    }
+  }
 
   private update() {
     if (this.isGamePaused()) return;
@@ -228,16 +254,9 @@ class Game {
     // Update ball physics
     if (this.isBallMoving) {
       this.ballMesh.position.add(this.ballVelocity);
-      this.ballVelocity.multiplyScalar(0.97); // Slightly increased friction
+      this.ballVelocity.multiplyScalar(0.97); // Friction
 
-      // Obstacle collision
-      this.obstacles.forEach(obstacle => {
-          const normal = this.getCollisionNormal(this.ballMesh, obstacle);
-          if (normal) {
-              this.ballVelocity.reflect(normal);
-              this.ballVelocity.multiplyScalar(0.7); // Energy loss on bounce
-          }
-      });
+      this.checkCollisions();
 
       // Check if ball has stopped
       if (this.ballVelocity.lengthSq() < 0.0001) {
@@ -248,12 +267,19 @@ class Game {
     
     // Check for hole completion
     if (!this.isHoleCompleted) {
-      const distToHole = this.ballMesh.position.distanceTo(this.holeMesh.position);
+      const distToHole = this.ballMesh.position.clone().setY(0).distanceTo(this.holeMesh.position.clone().setY(0));
       if (distToHole < this.level.holeRadius && this.ballVelocity.lengthSq() < 0.2) {
-        this.ballVelocity.set(0, 0, 0);
-        this.isBallMoving = false;
-        this.isHoleCompleted = true;
-        this.onHoleComplete();
+        // Animate ball falling into hole
+        const fallDirection = new THREE.Vector3().subVectors(this.holeMesh.position, this.ballMesh.position);
+        fallDirection.y = -0.1;
+        this.ballMesh.position.add(fallDirection.multiplyScalar(0.2));
+
+        if (this.ballMesh.position.y < this.holeMesh.position.y) {
+            this.ballVelocity.set(0, 0, 0);
+            this.isBallMoving = false;
+            this.isHoleCompleted = true;
+            this.onHoleComplete();
+        }
       }
     }
   }
@@ -334,7 +360,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
-
-    
 
     
