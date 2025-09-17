@@ -23,7 +23,7 @@ export default function RootLayout({
         />
         <style>{`
           /* Hide Next.js development indicator */
-          div[style*="z-index:9999999999"] {
+          nextjs-portal {
             display: none !important;
           }
         `}</style>
