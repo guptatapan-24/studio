@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { GenkitProvider } from '@genkit-ai/next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
@@ -24,10 +23,8 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <GenkitProvider>
-          {children}
-          <Toaster />
-        </GenkitProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );
