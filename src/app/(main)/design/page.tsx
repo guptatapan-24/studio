@@ -3,8 +3,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { designCourse, type CourseDesignOutput } from '@/ai/flows/course-design-tool';
+import { visualizeCourse, type VisualizeCourseOutput } from '@/ai/flows/visualize-course-flow';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +27,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wand2 } from 'lucide-react';
+import type { Level } from '@/lib/levels';
+
+const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center bg-gray-200"><Loader2 className="h-8 w-8 animate-spin" /></div>,
+});
+
 
 const formSchema = z.object({
   launchPoint: z.string().min(1, 'Launch point is required.'),
@@ -35,8 +44,10 @@ const formSchema = z.object({
 });
 
 export default function DesignPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<CourseDesignOutput | null>(null);
+  const [isDesigning, setIsDesigning] = useState(false);
+  const [isVisualizing, setIsVisualizing] = useState(false);
+  const [designResult, setDesignResult] = useState<CourseDesignOutput | null>(null);
+  const [visualizationResult, setVisualizationResult] = useState<Level | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,17 +60,46 @@ export default function DesignPage() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    setResult(null);
+  async function onDesignSubmit(values: z.infer<typeof formSchema>) {
+    setIsDesigning(true);
+    setDesignResult(null);
+    setVisualizationResult(null);
     setError(null);
     try {
       const output = await designCourse(values);
-      setResult(output);
+      setDesignResult(output);
     } catch (e) {
       setError(e instanceof Error ? e.message : "An unknown error occurred.");
     } finally {
-      setIsLoading(false);
+      setIsDesigning(false);
+    }
+  }
+
+  async function onVisualize() {
+    if (!designResult) return;
+    setIsVisualizing(true);
+    setError(null);
+    try {
+        const output = await visualizeCourse({ courseDescription: designResult.courseDesign });
+        const level: Level = {
+            id: 99, // Custom level ID
+            name: "AI Generated Course",
+            par: output.par,
+            startPosition: output.startPosition as [number, number, number],
+            holePosition: output.holePosition as [number, number, number],
+            holeRadius: output.holeRadius,
+            obstacles: output.obstacles.map(o => ({
+                ...o,
+                position: o.position as [number, number, number],
+                size: o.size as [number, number, number],
+                rotation: o.rotation as [number, number, number] | undefined,
+            })),
+        };
+        setVisualizationResult(level);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "An unknown error occurred.");
+    } finally {
+      setIsVisualizing(false);
     }
   }
 
@@ -72,7 +112,7 @@ export default function DesignPage() {
         </p>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onDesignSubmit)} className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle>Course Parameters</CardTitle>
@@ -140,16 +180,16 @@ export default function DesignPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isDesigning || isVisualizing}>
+                  {isDesigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Design with AI
                 </Button>
               </CardFooter>
             </Card>
           </form>
         </Form>
-
-        {isLoading && (
+        
+        {isDesigning && (
           <div className="mt-8 text-center">
             <div className="flex justify-center items-center p-8">
                 <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
@@ -169,17 +209,56 @@ export default function DesignPage() {
             </Card>
         )}
 
-        {result && (
+        {designResult && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Generated Course Design</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="prose dark:prose-invert max-w-none text-card-foreground">
-                <p>{result.courseDesign}</p>
+                <p>{designResult.courseDesign}</p>
               </div>
+               <Button onClick={onVisualize} disabled={isVisualizing || isDesigning}>
+                {isVisualizing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Wand2 className="mr-2 h-4 w-4" />
+                )}
+                Visualize
+              </Button>
             </CardContent>
           </Card>
+        )}
+        
+        {isVisualizing && (
+            <div className="mt-8 text-center">
+                <div className="flex justify-center items-center p-8">
+                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground mt-2 ml-4">AI is visualizing the course...</p>
+                </div>
+            </div>
+        )}
+
+        {visualizationResult && (
+            <Card className="mt-8">
+                <CardHeader>
+                    <CardTitle>3D Visualization</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="relative w-full h-[400px] rounded-md overflow-hidden border">
+                         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
+                            <GolfCanvas
+                                key={Date.now()}
+                                level={visualizationResult}
+                                onStroke={() => {}}
+                                onHoleComplete={() => {}}
+                                setPower={() => {}}
+                                isGamePaused={false}
+                            />
+                        </Suspense>
+                    </div>
+                </CardContent>
+            </Card>
         )}
       </div>
     </div>
