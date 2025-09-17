@@ -97,11 +97,23 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     aimLine.visible = false;
     scene.add(aimLine);
 
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
     const onMouseDown = (event: MouseEvent) => {
       if (state.isBallMoving) return;
-      state.isAiming = true;
-      state.aimStart.set(event.clientX, event.clientY);
-      aimLine.visible = true;
+
+      mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObject(state.ballMesh!);
+      if (intersects.length > 0) {
+        state.isAiming = true;
+        controls.enabled = false;
+        state.aimStart.set(event.clientX, event.clientY);
+        aimLine.visible = true;
+      }
     };
     
     const onMouseMove = (event: MouseEvent) => {
@@ -124,6 +136,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const onMouseUp = (event: MouseEvent) => {
       if (!state.isAiming || !state.ballMesh) return;
       state.isAiming = false;
+      controls.enabled = true;
       aimLine.visible = false;
       
       const current = new THREE.Vector2(event.clientX, event.clientY);
