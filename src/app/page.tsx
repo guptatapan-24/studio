@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, Mouse, Keyboard, Target, Camera, Bot, Layers } from 'lucide-react';
 import { GolfBallIcon } from '@/components/icons/GolfBallIcon';
 import { Header } from '@/components/layout/Header';
 
@@ -26,19 +26,18 @@ export default function Home() {
               data-ai-hint={heroImage.imageHint}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-shadow-lg">
               CloneFest 2025
             </h1>
             <p className="mt-4 text-lg md:text-xl text-white/90 text-shadow">
-              Reimagining a C-based Minigolf Classic. Porting an interactive 3D
-              minigolf hole to the web using Three.js.
+              An interactive 3D minigolf experience, ported from a C-based classic to the modern web with Next.js and Three.js.
             </p>
             <div className="mt-8 flex justify-center">
               <Button asChild size="lg">
                 <Link href="/levels">
-                  Click to Play <ArrowRight className="ml-2 h-5 w-5" />
+                  Play Now <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
@@ -47,7 +46,8 @@ export default function Home() {
 
         <div className="container py-12 md:py-20 space-y-16">
           <section id="how-to-play" className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center">How to Play</h2>
+            <h2 className="text-3xl font-bold text-center mb-2">How to Play</h2>
+            <p className="text-center text-muted-foreground mb-8">Master the controls to conquer the course.</p>
             <div className="mt-8 grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -81,7 +81,7 @@ export default function Home() {
                       Complete a level to unlock the next one.
                     </li>
                     <li>
-                      Complete all 10 levels to win!
+                      Beat all 10 levels to become a minigolf champion!
                     </li>
                   </ul>
                 </CardContent>
@@ -89,47 +89,32 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="background">
-            <h2 className="text-3xl font-bold text-center">Background</h2>
-            <p className="mt-4 max-w-3xl mx-auto text-center text-muted-foreground">
-              This project is an introductory exercise in 3D web graphics,
-              inspired by the open-source game Open Golf. The objective is to
-              familiarize participants with the fundamentals of rendering and
-              interacting with a 3D scene in a web browser.
-            </p>
-          </section>
-
-          <section id="objective">
-            <h2 className="text-3xl font-bold text-center">Core Objective</h2>
-            <p className="mt-4 max-w-3xl mx-auto text-center text-muted-foreground">
-              The primary goal is to render a static 3D golf hole using the
-              Three.js library. The scene must contain a golf ball that a user
-              can interact with, demonstrating a complete, albeit simple,
-              feedback loop from user input to 3D visualization.
-            </p>
-          </section>
-
           <section id="requirements">
-            <h2 className="text-3xl font-bold text-center">
-              Project Requirements
+            <h2 className="text-3xl font-bold text-center mb-2">
+              Project Features
             </h2>
+            <p className="text-center text-muted-foreground mb-8">
+              An exercise in 3D web graphics, rendering, and interaction.
+            </p>
             <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[
-                { title: 'Scene & Asset Rendering', description: 'Initialize a Three.js scene, load a 3D model for the course, and render a golf ball.' },
-                { title: 'Basic Physics & Interaction', description: 'Implement user input to apply velocity to the ball, with simplified friction.' },
-                { title: 'Gameplay & State Management', description: 'Manage game state like hole, par, and strokes. Implement goal detection.' },
-                { title: 'Player Controls', description: 'Intuitive controls for aiming precision and power, with clear visual feedback.' },
-                { title: 'Camera System', description: 'Interactive camera controls (orbit, pan, zoom) to inspect the course.' },
-                { title: 'AI Design Tool', description: 'A tool for programmatically editing course design, tuned using generative AI.' },
+                { title: 'Scene & Asset Rendering', description: 'Initialize a Three.js scene, load a 3D model for the course, and render a golf ball.', icon: <Layers/> },
+                { title: 'Basic Physics & Interaction', description: 'Implement user input to apply velocity to the ball, with simplified friction.', icon: <Mouse/> },
+                { title: 'Gameplay & State Management', description: 'Manage game state like hole, par, and strokes. Implement goal detection.', icon: <Target/> },
+                { title: 'Player Controls', description: 'Intuitive controls for aiming precision and power, with clear visual feedback.', icon: <Keyboard/> },
+                { title: 'Camera System', description: 'Interactive camera controls (orbit, pan, zoom) to inspect the course.', icon: <Camera/> },
+                { title: 'AI Design Tool', description: 'A tool for programmatically editing course design, tuned using generative AI.', icon: <Bot/> },
               ].map((item) => (
-                <Card key={item.title}>
+                <Card key={item.title} className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex items-start gap-3">
-                      <CheckCircle className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        {item.icon}
+                      </div>
                       <span>{item.title}</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-1">
                     <p className="text-muted-foreground">{item.description}</p>
                   </CardContent>
                 </Card>
@@ -138,20 +123,21 @@ export default function Home() {
           </section>
         </div>
 
-        <footer className="border-t">
+        <footer className="border-t bg-gray-50 dark:bg-gray-900/50">
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
               <GolfBallIcon className="h-6 w-6" />
-              <p className="text-center text-sm leading-loose md:text-left">
+              <p className="text-center text-sm leading-loose md:text-left text-muted-foreground">
                 Built for CloneFest 2025. An exercise in web-based 3D.
               </p>
             </div>
-            <Link
-              href="/design"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Try the AI Course Designer
-            </Link>
+            <Button variant="outline" asChild>
+                <Link
+                href="/design"
+                >
+                Try the AI Course Designer
+                </Link>
+            </Button>
           </div>
         </footer>
       </main>
