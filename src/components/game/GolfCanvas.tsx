@@ -129,9 +129,10 @@ class Game {
     });
 
     // Aim Line
-    const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+    const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthTest: false });
     const aimLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
     this.aimLine = new THREE.Line(aimLineGeo, aimLineMat);
+    this.aimLine.renderOrder = 999; // Render on top of everything
     this.scene.add(this.aimLine);
   }
 
