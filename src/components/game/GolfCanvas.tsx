@@ -129,8 +129,7 @@ class Game {
     });
 
     // Aim Line
-    const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-    aimLineMat.depthTest = false;
+    const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthTest: false });
     const aimLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
     this.aimLine = new THREE.Line(aimLineGeo, aimLineMat);
     this.aimLine.renderOrder = 999;
@@ -310,12 +309,6 @@ class Game {
     requestAnimationFrame(this.animate);
     this.controls.update();
     this.update();
-    
-    // Force the aim line to always render on top.
-    (this.aimLine.material as THREE.LineBasicMaterial).depthTest = false;
-    this.aimLine.renderOrder = 999;
-    (this.aimLine.material as THREE.LineBasicMaterial).needsUpdate = true;
-
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -387,4 +380,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
 export default GolfCanvas;
 
+    
     
