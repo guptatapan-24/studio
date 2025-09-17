@@ -47,7 +47,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
     // Use right-click for orbit, leave left-click for our aiming
-    controls.mouseButtons = { LEFT: 2, MIDDLE: 1, RIGHT: 0 }; // THREE.MOUSE.ROTATE is 0
+    controls.mouseButtons = { LEFT: 2, MIDDLE: 1, RIGHT: 0 }; 
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
@@ -253,5 +253,3 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
-
-    
