@@ -6,64 +6,74 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Level } from '@/lib/levels';
 
-type GolfCanvasProps = {
-  level: Level;
-  onStroke: () => void;
-  onHoleComplete: () => void;
-  setPower: (power: number) => void;
-  isGamePaused?: boolean;
-};
+// --- A dedicated class to manage the Three.js game world ---
+class Game {
+  private scene: THREE.Scene;
+  private camera: THREE.PerspectiveCamera;
+  private renderer: THREE.WebGLRenderer;
+  private controls: OrbitControls;
+  private ballMesh: THREE.Mesh;
+  private holeMesh: THREE.Mesh;
+  private obstacles: THREE.Mesh[] = [];
+  private aimLine: THREE.Line;
 
-const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false }) => {
-  const mountRef = useRef<HTMLDivElement>(null);
+  // Game state
+  private isBallMoving = false;
+  private isCharging = false;
+  private chargePower = 0;
+  private aimDirection = new THREE.Vector3(0, 0, -1);
+  private ballVelocity = new THREE.Vector3();
+  private isHoleCompleted = false;
+
+  // Callbacks
+  private onStroke: () => void;
+  private onHoleComplete: () => void;
+  private setPower: (power: number) => void;
+  private isGamePaused: () => boolean;
   
-  const state = useRef({
-    isBallMoving: false,
-    isCharging: false,
-    chargePower: 0,
-    aimDirection: new THREE.Vector3(0, 0, -1),
-    ballVelocity: new THREE.Vector3(),
-    ballMesh: null as THREE.Mesh | null,
-    holeMesh: null as THREE.Mesh | null,
-    isHoleCompleted: false,
-  }).current;
-
-  const memoizedOnStroke = useCallback(onStroke, [onStroke]);
-  const memoizedOnHoleComplete = useCallback(() => {
-    if (!state.isHoleCompleted) {
-        state.isHoleCompleted = true;
-        onHoleComplete();
+  constructor(
+    private mount: HTMLDivElement,
+    private level: Level,
+    callbacks: {
+        onStroke: () => void;
+        onHoleComplete: () => void;
+        setPower: (power: number) => void;
+        isGamePaused: () => boolean;
     }
-  }, [onHoleComplete, state]);
+  ) {
+    this.onStroke = callbacks.onStroke;
+    this.onHoleComplete = callbacks.onHoleComplete;
+    this.setPower = callbacks.setPower;
+    this.isGamePaused = callbacks.isGamePaused;
 
-  useEffect(() => {
-    if (!mountRef.current) return;
-    
-    const currentMount = mountRef.current;
-    state.isHoleCompleted = false; 
+    // --- Basic setup ---
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x87CEEB);
+    this.scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
 
-    // --- Scene Setup ---
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); 
-    scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+    this.camera = new THREE.PerspectiveCamera(60, this.mount.clientWidth / this.mount.clientHeight, 0.1, 1000);
+    this.camera.position.set(this.level.startPosition[0], 5, this.level.startPosition[2] + 8);
 
-    const camera = new THREE.PerspectiveCamera(60, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.set(level.startPosition[0], 5, level.startPosition[2] + 8);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
+    this.renderer.shadowMap.enabled = true;
+    this.mount.appendChild(this.renderer.domElement);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    renderer.shadowMap.enabled = true;
-    currentMount.appendChild(renderer.domElement);
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.1;
+    this.controls.screenSpacePanning = false; // Right-click to pan
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    this.controls.target.set(this.level.startPosition[0], this.level.startPosition[1], this.level.startPosition[2]);
 
-    // --- Controls ---
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; 
-    controls.target.set(level.startPosition[0], level.startPosition[1], level.startPosition[2]);
+    this.addLights();
+    this.createLevel();
+    this.bindEventHandlers();
+  }
 
-    // --- Lighting ---
+  private addLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
+    this.scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
     dirLight.position.set(10, 20, 5);
@@ -74,212 +84,244 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     dirLight.shadow.camera.right = 15;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
-    scene.add(dirLight);
+    this.scene.add(dirLight);
+  }
 
-    // --- Game Objects ---
+  private createLevel() {
+    // Ground
     const groundGeo = new THREE.PlaneGeometry(50, 50);
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x55aa55, roughness: 0.9 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
-    scene.add(ground);
+    this.scene.add(ground);
 
+    // Ball
     const ballGeo = new THREE.SphereGeometry(0.15, 32, 16);
     const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.1 });
-    state.ballMesh = new THREE.Mesh(ballGeo, ballMat);
-    state.ballMesh.castShadow = true;
-    state.ballMesh.position.fromArray(level.startPosition);
-    scene.add(state.ballMesh);
+    this.ballMesh = new THREE.Mesh(ballGeo, ballMat);
+    this.ballMesh.castShadow = true;
+    this.ballMesh.position.fromArray(this.level.startPosition);
+    this.scene.add(this.ballMesh);
 
-    const holeGeo = new THREE.CircleGeometry(level.holeRadius, 32);
+    // Hole
+    const holeGeo = new THREE.CircleGeometry(this.level.holeRadius, 32);
     const holeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-    state.holeMesh = new THREE.Mesh(holeGeo, holeMat);
-    state.holeMesh.position.fromArray(level.holePosition);
-    state.holeMesh.rotation.x = -Math.PI / 2;
-    scene.add(state.holeMesh);
+    this.holeMesh = new THREE.Mesh(holeGeo, holeMat);
+    this.holeMesh.position.fromArray(this.level.holePosition);
+    this.holeMesh.rotation.x = -Math.PI / 2;
+    this.scene.add(this.holeMesh);
 
-    const obstacles: THREE.Mesh[] = [];
-    level.obstacles.forEach(obs => {
+    // Obstacles
+    this.level.obstacles.forEach(obs => {
       const obsGeo = new THREE.BoxGeometry(...obs.size);
       const obsMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.8 });
       const obstacle = new THREE.Mesh(obsGeo, obsMat);
       obstacle.position.fromArray(obs.position);
-      if(obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
+      if (obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
       obstacle.castShadow = true;
       obstacle.receiveShadow = true;
-      scene.add(obstacle);
-      obstacles.push(obstacle);
+      this.scene.add(obstacle);
+      this.obstacles.push(obstacle);
     });
-    
-    // --- Aiming indicator ---
+
+    // Aim Line
     const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
     const aimLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-    const aimLine = new THREE.Line(aimLineGeo, aimLineMat);
-    scene.add(aimLine);
+    this.aimLine = new THREE.Line(aimLineGeo, aimLineMat);
+    this.scene.add(this.aimLine);
+  }
 
-    // --- Event Handlers ---
-    const onKeyDown = (event: KeyboardEvent) => {
-        if (isGamePaused || state.isBallMoving || state.isHoleCompleted) return;
-        
-        switch(event.key.toLowerCase()) {
-            case 'arrowleft':
-                event.preventDefault();
-                state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
-                break;
-            case 'arrowright':
-                event.preventDefault();
-                state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
-                break;
-            case 'p':
-                event.preventDefault();
-                if (!state.isCharging) {
-                    state.isCharging = true;
-                }
-                break;
-        }
-    }
+  private bindEventHandlers() {
+    window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keyup', this.handleKeyUp);
+    window.addEventListener('resize', this.handleResize);
+  }
 
-    const onKeyUp = (event: KeyboardEvent) => {
-        if (isGamePaused || state.isHoleCompleted) return;
-        
-        if (event.key.toLowerCase() === 'p' && state.isCharging && state.ballMesh) {
-            event.preventDefault();
-            
-            if (state.chargePower < 5) {
-                // If not enough power, cancel the shot
-                state.isCharging = false;
-                setPower(0);
-                state.chargePower = 0;
-                return;
-            }
-
-            const powerMultiplier = 0.04;
-            // Apply force from the ball's CURRENT position
-            state.ballVelocity.copy(state.aimDirection).multiplyScalar(state.chargePower * powerMultiplier);
-            state.isBallMoving = true;
-            memoizedOnStroke();
-
-            // Reset charge state AFTER the shot is taken
-            state.isCharging = false;
-            setPower(0);
-            state.chargePower = 0;
-        }
-    }
-
-    const handleResize = () => {
-      camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('resize', handleResize);
+  private handleKeyDown = (event: KeyboardEvent) => {
+    if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
     
-    // --- Animation Loop ---
-    let animationFrameId: number;
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      
-      if (isGamePaused) {
-        controls.update();
-        renderer.render(scene, camera);
-        return;
-      }
-
-      // --- Update logic ---
-      const chargeSpeed = 0.75;
-      if (state.isCharging) {
-          const newPower = Math.min(state.chargePower + chargeSpeed, 100);
-          state.chargePower = newPower;
-          setPower(newPower);
-      }
-
-      if (state.ballMesh && aimLine) {
-        aimLine.visible = !state.isBallMoving && !state.isHoleCompleted;
-        if(aimLine.visible) {
-            const startPoint = state.ballMesh.position;
-            const endPoint = startPoint.clone().add(state.aimDirection.clone().multiplyScalar(3));
-            aimLine.geometry.setFromPoints([startPoint, endPoint]);
-        }
-      }
-      
-      if (state.isBallMoving && state.ballMesh) {
-        state.ballMesh.position.add(state.ballVelocity);
-        
-        // Improved Friction
-        state.ballVelocity.multiplyScalar(0.975); 
-
-        // Obstacle collision
-        const ballBox = new THREE.Box3().setFromObject(state.ballMesh);
-        obstacles.forEach(obstacle => {
-            const obstacleBox = new THREE.Box3().setFromObject(obstacle);
-            if (ballBox.intersectsBox(obstacleBox)) {
-                const ballCenter = new THREE.Vector3();
-                ballBox.getCenter(ballCenter);
-                const obstacleCenter = new THREE.Vector3();
-                obstacleBox.getCenter(obstacleCenter);
-                
-                const normal = ballCenter.sub(obstacleCenter).normalize();
-                state.ballVelocity.reflect(normal);
-                
-                // Energy loss on collision
-                state.ballVelocity.multiplyScalar(0.8);
+    switch(event.key.toLowerCase()) {
+        case 'arrowleft':
+            event.preventDefault();
+            this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
+            break;
+        case 'arrowright':
+            event.preventDefault();
+            this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
+            break;
+        case 'p':
+            event.preventDefault();
+            if (!this.isCharging) {
+                this.isCharging = true;
             }
-        });
+            break;
+    }
+  }
 
-        // Check if ball has stopped
-        if (state.ballVelocity.lengthSq() < 0.0001) {
-            state.ballVelocity.set(0, 0, 0);
-            state.isBallMoving = false;
+  private handleKeyUp = (event: KeyboardEvent) => {
+    if (this.isGamePaused() || this.isHoleCompleted) return;
+    
+    if (event.key.toLowerCase() === 'p' && this.isCharging) {
+        event.preventDefault();
+        
+        if (this.chargePower < 5) { // Cancel shot if not enough power
+            this.isCharging = false;
+            this.setPower(0);
+            this.chargePower = 0;
+            return;
         }
-      }
-      
-      if (state.ballMesh && state.holeMesh && !state.isHoleCompleted) {
-        const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
-        // Check if ball is in the hole and moving slowly enough to fall in
-        if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.2) {
-          state.ballVelocity.set(0,0,0);
-          state.isBallMoving = false;
-          memoizedOnHoleComplete();
-        }
-      }
 
-      controls.update();
-      renderer.render(scene, camera);
-    };
+        const powerMultiplier = 0.04;
+        this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
+        this.isBallMoving = true;
+        this.onStroke();
 
-    animate();
+        // Reset charge state AFTER the shot is taken
+        this.isCharging = false;
+        this.setPower(0);
+        this.chargePower = 0;
+    }
+  }
 
-    // --- Cleanup ---
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('resize', handleResize);
-      if (currentMount && renderer.domElement) {
-        currentMount.removeChild(renderer.domElement);
-      }
-      
-      scene.traverse(object => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          if (Array.isArray(object.material)) {
-            object.material.forEach(material => material.dispose());
-          } else {
-            object.material.dispose();
+  private handleResize = () => {
+    this.camera.aspect = this.mount.clientWidth / this.mount.clientHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
+  };
+
+  private update() {
+    if (this.isGamePaused()) return;
+    
+    // Update charge power
+    const chargeSpeed = 0.75;
+    if (this.isCharging) {
+        const newPower = Math.min(this.chargePower + chargeSpeed, 100);
+        this.chargePower = newPower;
+        this.setPower(newPower);
+    }
+    
+    // Update aim indicator
+    this.aimLine.visible = !this.isBallMoving && !this.isHoleCompleted;
+    if(this.aimLine.visible) {
+        const startPoint = this.ballMesh.position;
+        const endPoint = startPoint.clone().add(this.aimDirection.clone().multiplyScalar(3));
+        this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
+    }
+    
+    // Update ball physics
+    if (this.isBallMoving) {
+      this.ballMesh.position.add(this.ballVelocity);
+      this.ballVelocity.multiplyScalar(0.975); // Friction
+
+      // Obstacle collision
+      const ballBox = new THREE.Box3().setFromObject(this.ballMesh);
+      this.obstacles.forEach(obstacle => {
+          const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+          if (ballBox.intersectsBox(obstacleBox)) {
+              const ballCenter = new THREE.Vector3();
+              ballBox.getCenter(ballCenter);
+              const obstacleCenter = new THREE.Vector3();
+              obstacleBox.getCenter(obstacleCenter);
+              
+              const normal = ballCenter.sub(obstacleCenter).normalize();
+              this.ballVelocity.reflect(normal);
+              this.ballVelocity.multiplyScalar(0.8); // Energy loss on bounce
           }
-        }
       });
-      renderer.dispose();
-      controls.dispose();
+
+      // Check if ball has stopped
+      if (this.ballVelocity.lengthSq() < 0.0001) {
+          this.ballVelocity.set(0, 0, 0);
+          this.isBallMoving = false;
+      }
+    }
+    
+    // Check for hole completion
+    if (!this.isHoleCompleted) {
+      const distToHole = this.ballMesh.position.distanceTo(this.holeMesh.position);
+      if (distToHole < this.level.holeRadius && this.ballVelocity.lengthSq() < 0.2) {
+        this.ballVelocity.set(0, 0, 0);
+        this.isBallMoving = false;
+        this.isHoleCompleted = true;
+        this.onHoleComplete();
+      }
+    }
+  }
+
+  public animate = () => {
+    requestAnimationFrame(this.animate);
+    this.controls.update();
+    this.update();
+    this.renderer.render(this.scene, this.camera);
+  };
+
+  public cleanup() {
+    window.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener('resize', this.handleResize);
+
+    if (this.mount && this.renderer.domElement) {
+        try {
+            this.mount.removeChild(this.renderer.domElement);
+        } catch (e) {
+            console.error("Failed to remove renderer DOM element.", e);
+        }
+    }
+    
+    this.scene.traverse(object => {
+      if (object instanceof THREE.Mesh) {
+        object.geometry.dispose();
+        if (Array.isArray(object.material)) {
+          object.material.forEach(material => material.dispose());
+        } else {
+          object.material.dispose();
+        }
+      }
+    });
+    this.renderer.dispose();
+    this.controls.dispose();
+  }
+}
+
+// --- The React Component ---
+type GolfCanvasProps = {
+  level: Level;
+  onStroke: () => void;
+  onHoleComplete: () => void;
+  setPower: (power: number) => void;
+  isGamePaused?: boolean;
+};
+
+const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false }) => {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const isGamePausedRef = useRef(isGamePaused);
+
+  useEffect(() => {
+    isGamePausedRef.current = isGamePaused;
+  }, [isGamePaused]);
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+
+    const game = new Game(mountRef.current, level, {
+        onStroke,
+        onHoleComplete,
+        setPower,
+        isGamePaused: () => isGamePausedRef.current,
+    });
+    
+    game.animate();
+
+    return () => {
+      game.cleanup();
     };
-  }, [level, setPower, memoizedOnStroke, memoizedOnHoleComplete, isGamePaused, state]);
+    // We want this effect to run ONLY when the level changes, to create a new game instance.
+    // All other props are passed as callbacks or refs to the Game class.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
 
   return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
 
 export default GolfCanvas;
-    
-
-    
