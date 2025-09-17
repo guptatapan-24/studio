@@ -276,6 +276,15 @@ class Game {
           this.ballVelocity.set(0, 0, 0);
           this.isBallMoving = false;
       }
+      
+      // Out of bounds check
+      const { x, y, z } = this.ballMesh.position;
+      if (y < -2 || Math.abs(x) > 25 || Math.abs(z) > 25) {
+        this.onStroke(); // Add penalty stroke
+        this.ballMesh.position.fromArray(this.level.startPosition);
+        this.ballVelocity.set(0, 0, 0);
+        this.isBallMoving = false;
+      }
     }
     
     if (!this.isHoleCompleted) {
@@ -369,5 +378,3 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
-
-    
