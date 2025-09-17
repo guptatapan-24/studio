@@ -6,13 +6,12 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { levels } from '@/lib/levels';
-import { CheckCircle, Lock, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function LevelsPage() {
   const router = useRouter();
-  const [completedLevels, setCompletedLevels] = useState<number[]>([]);
-
+  
   useEffect(() => {
     // This is a placeholder for if you wanted to track completed levels.
     // For now, we just unlock everything.
@@ -30,9 +29,6 @@ export default function LevelsPage() {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {levels.map((level) => {
-            const isUnlocked = true; // All levels are unlocked
-            const isCompleted = false; // You could implement completion tracking here if needed
-
             return (
               <Card 
                 key={level.id} 
