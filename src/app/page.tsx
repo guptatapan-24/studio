@@ -5,41 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { GolfBallIcon } from '@/components/icons/GolfBallIcon';
+import { Header } from '@/components/layout/Header';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course');
+  const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course-2');
 
   return (
     <div className="flex flex-col min-h-dvh bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center">
-          <div className="mr-4 flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <GolfBallIcon className="h-6 w-6" />
-              <span className="font-bold sm:inline-block">Web Golf</span>
-            </Link>
-          </div>
-           <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-             <Link
-                href="/levels"
-                className="text-foreground/60 transition-colors hover:text-foreground/80"
-              >
-                Levels
-              </Link>
-             <Link
-                href="/design"
-                className="text-foreground/60 transition-colors hover:text-foreground/80"
-              >
-                Design
-              </Link>
-            </nav>
-          <div className="flex flex-1 items-center justify-end space-x-4">
-            <Button asChild>
-              <Link href="/levels">Play Now</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1">
         <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
