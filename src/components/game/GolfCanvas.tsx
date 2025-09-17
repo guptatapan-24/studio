@@ -107,9 +107,11 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
         switch(event.key) {
             case 'ArrowLeft':
+                event.preventDefault();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 60);
                 break;
             case 'ArrowRight':
+                event.preventDefault();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 60);
                 break;
             case ' ': // Spacebar
@@ -150,8 +152,13 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+    const handleClick = () => {
+      currentMount.focus();
+    };
+
+    currentMount.addEventListener('click', handleClick);
+    currentMount.addEventListener('keydown', onKeyDown);
+    currentMount.addEventListener('keyup', onKeyUp);
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
@@ -204,9 +211,10 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      currentMount.removeEventListener('click', handleClick);
+      currentMount.removeEventListener('keydown', onKeyDown);
+      currentMount.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
       if (renderer.domElement.parentNode === currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
@@ -215,7 +223,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
   }, [level, setPower, memoizedOnStroke, memoizedOnHoleComplete, state]);
 
-  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
+  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" tabIndex={0} />;
 };
 
 export default GolfCanvas;
