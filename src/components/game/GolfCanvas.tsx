@@ -15,9 +15,11 @@ type GolfCanvasProps = {
 const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const state = useRef({
-    isAiming: false,
     isBallMoving: false,
-    aimStart: new THREE.Vector2(),
+    isCharging: false,
+    power: 0,
+    chargeStartTime: 0,
+    aimDirection: new THREE.Vector3(0, 0, -1),
     ballVelocity: new THREE.Vector3(),
     ballMesh: null as THREE.Mesh | null,
     holeMesh: null as THREE.Mesh | null,
@@ -46,8 +48,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
-    controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }; 
-    controls.enablePan = false;
+    controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN }; 
+    controls.enablePan = true;
 
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -97,103 +99,46 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const aimLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
     const aimLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
     const aimLine = new THREE.Line(aimLineGeo, aimLineMat);
-    aimLine.visible = false;
     scene.add(aimLine);
 
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (state.isBallMoving) return;
-      if (event.button !== 0) return; // Only act on left-clicks
-
-      mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-
-      const intersects = raycaster.intersectObject(state.ballMesh!);
-      if (intersects.length > 0) {
-        event.stopPropagation(); // Prevent controls from activating
-        state.isAiming = true;
-        controls.enabled = false;
-        state.aimStart.set(event.clientX, event.clientY);
-        aimLine.visible = true;
-      }
-    };
-    
-    const onMouseMove = (event: MouseEvent) => {
-      if (!state.isAiming || !state.ballMesh) return;
-      const current = new THREE.Vector2(event.clientX, event.clientY);
-      const diff = current.clone().sub(state.aimStart);
-      const power = Math.min(diff.length() / 2, 100);
-      setPower(power);
-
-      const worldDirection = new THREE.Vector3();
-      camera.getWorldDirection(worldDirection);
-      const camAngle = Math.atan2(worldDirection.x, worldDirection.z);
-      
-      const aimDirection = new THREE.Vector3(-diff.x, 0, -diff.y).normalize();
-      aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), camAngle);
-
-      aimLine.geometry.setFromPoints([state.ballMesh.position, state.ballMesh.position.clone().add(aimDirection.multiplyScalar(power / 20))]);
-    };
-    
-    const onMouseUp = (event: MouseEvent) => {
-      if (event.button !== 0 || !state.isAiming || !state.ballMesh) {
-          controls.enabled = true; // Always re-enable controls
-          return;
-      };
-
-      state.isAiming = false;
-      controls.enabled = true;
-      aimLine.visible = false;
-      
-      const current = new THREE.Vector2(event.clientX, event.clientY);
-      const diff = current.clone().sub(state.aimStart);
-      const power = Math.min(diff.length() / 2, 100);
-
-      if (power < 5) { setPower(0); return; }
-
-      const worldDirection = new THREE.Vector3();
-      camera.getWorldDirection(worldDirection);
-      const camAngle = Math.atan2(worldDirection.x, worldDirection.z);
-      
-      const launchDirection = new THREE.Vector3(-diff.x, 0, -diff.y).normalize();
-      launchDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), camAngle);
-
-      state.ballVelocity.copy(launchDirection).multiplyScalar(power * 0.003);
-      state.isBallMoving = true;
-      memoizedOnStroke();
-      setPower(0);
-    };
 
     const onKeyDown = (event: KeyboardEvent) => {
         if (state.isBallMoving) return;
-        const nudgePower = 0.01;
-        let didNudge = false;
 
         switch(event.key) {
-            case 'ArrowUp':
-                state.ballVelocity.z -= nudgePower;
-                didNudge = true;
-                break;
-            case 'ArrowDown':
-                state.ballVelocity.z += nudgePower;
-                didNudge = true;
-                break;
             case 'ArrowLeft':
-                state.ballVelocity.x -= nudgePower;
-                didNudge = true;
+                state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 60);
                 break;
             case 'ArrowRight':
-                state.ballVelocity.x += nudgePower;
-                didNudge = true;
+                state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 60);
+                break;
+            case ' ': // Spacebar
+                if (!state.isCharging) {
+                    state.isCharging = true;
+                    state.chargeStartTime = Date.now();
+                }
                 break;
         }
+    }
 
-        if (didNudge) {
+    const onKeyUp = (event: KeyboardEvent) => {
+        if (event.key === ' ' && state.isCharging && state.ballMesh) {
+            state.isCharging = false;
+            
+            const chargeDuration = Date.now() - state.chargeStartTime;
+            const power = Math.min(chargeDuration / 20, 100); // Max power at 2 seconds
+            
+            if (power < 5) {
+                setPower(0);
+                state.power = 0;
+                return;
+            }
+
+            state.ballVelocity.copy(state.aimDirection).multiplyScalar(power * 0.003);
             state.isBallMoving = true;
             memoizedOnStroke();
+            setPower(0);
+            state.power = 0;
         }
     }
 
@@ -203,16 +148,27 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     };
 
-    currentMount.addEventListener('mousedown', onMouseDown);
-    currentMount.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      if(state.isCharging) {
+          const chargeDuration = Date.now() - state.chargeStartTime;
+          state.power = Math.min(chargeDuration / 20, 100);
+          setPower(state.power);
+      }
+
+      if (state.ballMesh) {
+        aimLine.visible = !state.isBallMoving;
+        if(aimLine.visible) {
+            aimLine.geometry.setFromPoints([state.ballMesh.position, state.ballMesh.position.clone().add(state.aimDirection.clone().multiplyScalar(3))]);
+        }
+      }
 
       if (state.isBallMoving && state.ballMesh) {
         state.ballMesh.position.add(state.ballVelocity);
@@ -226,8 +182,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       
       if (state.ballMesh && state.holeMesh) {
         const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
-        if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.001) {
-          state.isBallMoving = false;
+        if (distToHole < level.holeRadius && !state.isBallMoving) {
           state.ballVelocity.set(0,0,0);
           
           // Simple animation to sink the ball
@@ -248,10 +203,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
-      currentMount.removeEventListener('mousedown', onMouseDown);
-      currentMount.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('keyup', onKeyUp);
       if (renderer.domElement.parentNode === currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
