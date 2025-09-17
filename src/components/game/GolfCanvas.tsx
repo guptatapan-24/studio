@@ -102,18 +102,24 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const mouse = new THREE.Vector2();
 
     const onMouseDown = (event: MouseEvent) => {
-      if (state.isBallMoving || event.button !== 0) return; // Only allow aiming with left-click
+      if (state.isBallMoving) return;
 
-      mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
+      if (event.button === 0) { // Left mouse button
+        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+        mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
 
-      const intersects = raycaster.intersectObject(state.ballMesh!);
-      if (intersects.length > 0) {
-        state.isAiming = true;
-        controls.enabled = false;
-        state.aimStart.set(event.clientX, event.clientY);
-        aimLine.visible = true;
+        const intersects = raycaster.intersectObject(state.ballMesh!);
+        if (intersects.length > 0) {
+          state.isAiming = true;
+          controls.enabled = false;
+          state.aimStart.set(event.clientX, event.clientY);
+          aimLine.visible = true;
+        } else {
+          controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+        }
+      } else if (event.button === 2) { // Right mouse button
+          controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
       }
     };
     
@@ -135,28 +141,35 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
     
     const onMouseUp = (event: MouseEvent) => {
-      if (!state.isAiming || !state.ballMesh || event.button !== 0) return;
-      state.isAiming = false;
-      controls.enabled = true;
-      aimLine.visible = false;
-      
-      const current = new THREE.Vector2(event.clientX, event.clientY);
-      const diff = current.clone().sub(state.aimStart);
-      const power = Math.min(diff.length() / 2, 100);
+      if (event.button === 0) { // Left mouse button
+        if (!state.isAiming || !state.ballMesh) {
+            controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+            return;
+        };
 
-      if (power < 5) { setPower(0); return; }
+        state.isAiming = false;
+        controls.enabled = true;
+        aimLine.visible = false;
+        
+        const current = new THREE.Vector2(event.clientX, event.clientY);
+        const diff = current.clone().sub(state.aimStart);
+        const power = Math.min(diff.length() / 2, 100);
 
-      const worldDirection = new THREE.Vector3();
-      camera.getWorldDirection(worldDirection);
-      const camAngle = Math.atan2(worldDirection.x, worldDirection.z);
-      
-      const launchDirection = new THREE.Vector3(-diff.x, 0, -diff.y).normalize();
-      launchDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), camAngle);
+        if (power < 5) { setPower(0); return; }
 
-      state.ballVelocity.copy(launchDirection).multiplyScalar(power * 0.003);
-      state.isBallMoving = true;
-      memoizedOnStroke();
-      setPower(0);
+        const worldDirection = new THREE.Vector3();
+        camera.getWorldDirection(worldDirection);
+        const camAngle = Math.atan2(worldDirection.x, worldDirection.z);
+        
+        const launchDirection = new THREE.Vector3(-diff.x, 0, -diff.y).normalize();
+        launchDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), camAngle);
+
+        state.ballVelocity.copy(launchDirection).multiplyScalar(power * 0.003);
+        state.isBallMoving = true;
+        memoizedOnStroke();
+        setPower(0);
+      }
+      controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -192,7 +205,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const handleResize = () => {
       camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+      renderer.setSize(currentMount.clientWidth / currentMount.clientHeight);
     };
 
     currentMount.addEventListener('mousedown', onMouseDown);
@@ -216,18 +229,21 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         }
       }
       
-      const distToHole = state.ballMesh?.position.distanceTo(state.holeMesh!.position) || Infinity;
-      if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.001) {
-        state.isBallMoving = false;
-        state.ballVelocity.set(0,0,0);
-        
-        // Simple animation to sink the ball
-        if (state.ballMesh.position.y > state.holeMesh.position.y) {
-           state.ballMesh.position.y -= 0.01;
-        } else {
-           memoizedOnHoleComplete();
+      if (state.ballMesh && state.holeMesh) {
+        const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
+        if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.001) {
+          state.isBallMoving = false;
+          state.ballVelocity.set(0,0,0);
+          
+          // Simple animation to sink the ball
+          if (state.ballMesh.position.y > state.holeMesh.position.y) {
+             state.ballMesh.position.y -= 0.01;
+          } else {
+             memoizedOnHoleComplete();
+          }
         }
       }
+
 
       controls.update();
       renderer.render(scene, camera);
@@ -254,3 +270,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
