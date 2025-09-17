@@ -114,18 +114,20 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const onKeyDown = (event: KeyboardEvent) => {
         if (state.isBallMoving || state.isHoleCompleted) return;
         
-        // Let's stop other elements from getting this event
-        event.preventDefault();
-        event.stopPropagation();
-
         switch(event.key) {
             case 'ArrowLeft':
+                event.preventDefault();
+                event.stopPropagation();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 60);
                 break;
             case 'ArrowRight':
+                event.preventDefault();
+                event.stopPropagation();
                 state.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 60);
                 break;
             case ' ': // Spacebar
+                event.preventDefault();
+                event.stopPropagation();
                 if (!state.isCharging) {
                     state.isCharging = true;
                     state.chargeStartTime = Date.now();
@@ -137,10 +139,9 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const onKeyUp = (event: KeyboardEvent) => {
         if (state.isHoleCompleted) return;
         
-        event.preventDefault();
-        event.stopPropagation();
-        
         if (event.key === ' ' && state.isCharging && state.ballMesh) {
+            event.preventDefault();
+            event.stopPropagation();
             
             state.isCharging = false;
             
@@ -172,8 +173,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
 
     currentMount.addEventListener('click', handleClick);
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+    currentMount.addEventListener('keydown', onKeyDown);
+    currentMount.addEventListener('keyup', onKeyUp);
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
@@ -198,7 +199,24 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         state.ballMesh.position.add(state.ballVelocity);
         state.ballVelocity.multiplyScalar(0.98); // friction
 
-        if (state.ballVelocity.lengthSq() < 0.00001) {
+        // Obstacle collision
+        const ballBox = new THREE.Box3().setFromObject(state.ballMesh);
+        obstacles.forEach(obstacle => {
+            const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+            if (ballBox.intersectsBox(obstacleBox)) {
+                // simple bounce logic
+                const ballCenter = new THREE.Vector3();
+                ballBox.getCenter(ballCenter);
+                const obstacleCenter = new THREE.Vector3();
+                obstacleBox.getCenter(obstacleCenter);
+                
+                const normal = ballCenter.sub(obstacleCenter).normalize();
+                
+                state.ballVelocity.reflect(normal);
+            }
+        });
+
+        if (state.ballVelocity.lengthSq() < 0.0001) {
             state.ballVelocity.set(0, 0, 0);
             state.isBallMoving = false;
         }
@@ -206,14 +224,17 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       
       if (state.ballMesh && state.holeMesh && !state.isHoleCompleted) {
         const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
-        if (distToHole < level.holeRadius && !state.isBallMoving) {
+        if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.01) { // Ball must be slow to enter hole
           state.ballVelocity.set(0,0,0);
           state.isBallMoving = true; // prevent shooting while ball is sinking
           
           // Simple animation to sink the ball
           const sinkTargetY = state.holeMesh.position.y - 0.2;
+          const sinkSpeed = 0.01;
+          
           if (state.ballMesh.position.y > sinkTargetY) {
-             state.ballMesh.position.y -= 0.01;
+             const newY = Math.max(sinkTargetY, state.ballMesh.position.y - sinkSpeed);
+             state.ballMesh.position.y = newY;
           } else {
              memoizedOnHoleComplete();
           }
@@ -229,8 +250,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     return () => {
       cancelAnimationFrame(animationFrameId);
       currentMount.removeEventListener('click', handleClick);
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
+      currentMount.removeEventListener('keydown', onKeyDown);
+      currentMount.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
       if (renderer.domElement.parentNode === currentMount) {
         currentMount.removeChild(renderer.domElement);

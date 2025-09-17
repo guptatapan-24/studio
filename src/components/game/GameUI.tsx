@@ -1,17 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
 
 type GameUIProps = {
   level: number;
   par: number;
   strokes: number;
   power: number; // 0 to 100
-  onReset: () => void;
 };
 
-export function GameUI({ level, par, strokes, power, onReset }: GameUIProps) {
+export function GameUI({ level, par, strokes, power }: GameUIProps) {
   return (
     <>
       <div className="absolute top-4 left-4 z-10 text-foreground">
@@ -35,11 +32,6 @@ export function GameUI({ level, par, strokes, power, onReset }: GameUIProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
-      <div className="absolute top-4 right-4 z-10">
-        <Button variant="secondary" size="icon" onClick={onReset} aria-label="Reset Level" tabIndex={-1}>
-            <RotateCcw className="h-4 w-4" />
-        </Button>
       </div>
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-64">
         <Card className="bg-background/80 backdrop-blur-sm">

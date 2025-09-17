@@ -54,7 +54,7 @@ export default function PlayPage() {
 
   return (
     <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background">
-      <GameUI level={currentLevel.id} par={currentLevel.par} strokes={strokes} power={power} onReset={handleReset} />
+      <GameUI level={currentLevel.id} par={currentLevel.par} strokes={strokes} power={power} />
         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
             <GolfCanvas
                 key={levelIndex} // Re-mount component on level change to reset its internal state
