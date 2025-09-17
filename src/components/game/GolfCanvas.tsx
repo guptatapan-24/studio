@@ -146,6 +146,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
             event.preventDefault();
             
             if (state.chargePower < 5) {
+                // If not enough power, cancel the shot
                 state.isCharging = false;
                 setPower(0);
                 state.chargePower = 0;
@@ -153,10 +154,12 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
             }
 
             const powerMultiplier = 0.04;
+            // Apply force from the ball's CURRENT position
             state.ballVelocity.copy(state.aimDirection).multiplyScalar(state.chargePower * powerMultiplier);
             state.isBallMoving = true;
             memoizedOnStroke();
 
+            // Reset charge state AFTER the shot is taken
             state.isCharging = false;
             setPower(0);
             state.chargePower = 0;
@@ -184,6 +187,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         return;
       }
 
+      // --- Update logic ---
       const chargeSpeed = 0.75;
       if (state.isCharging) {
           const newPower = Math.min(state.chargePower + chargeSpeed, 100);
@@ -194,7 +198,9 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       if (state.ballMesh && aimLine) {
         aimLine.visible = !state.isBallMoving && !state.isHoleCompleted;
         if(aimLine.visible) {
-            aimLine.geometry.setFromPoints([state.ballMesh.position, state.ballMesh.position.clone().add(state.aimDirection.clone().multiplyScalar(3))]);
+            const startPoint = state.ballMesh.position;
+            const endPoint = startPoint.clone().add(state.aimDirection.clone().multiplyScalar(3));
+            aimLine.geometry.setFromPoints([startPoint, endPoint]);
         }
       }
       
@@ -204,6 +210,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         // Improved Friction
         state.ballVelocity.multiplyScalar(0.975); 
 
+        // Obstacle collision
         const ballBox = new THREE.Box3().setFromObject(state.ballMesh);
         obstacles.forEach(obstacle => {
             const obstacleBox = new THREE.Box3().setFromObject(obstacle);
@@ -269,9 +276,8 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     };
   }, [level, setPower, memoizedOnStroke, memoizedOnHoleComplete, isGamePaused, state]);
 
-  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full cursor-grab active:cursor-grabbing" />;
+  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
 
 export default GolfCanvas;
-
     
