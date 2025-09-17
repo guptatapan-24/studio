@@ -41,9 +41,21 @@ export default function PlayPage() {
     setGameKey(Date.now()); // Change the key to force re-mount
   };
 
+  const handleReset = () => {
+    setStrokes(0);
+    setIsHoleComplete(false);
+    setGameKey(Date.now());
+  }
+
   return (
     <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background">
-      <GameUI level={currentLevel.id} par={currentLevel.par} strokes={strokes} power={power} />
+      <GameUI 
+        level={currentLevel.id} 
+        par={currentLevel.par} 
+        strokes={strokes} 
+        power={power}
+        onReset={handleReset}
+      />
         <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
             <GolfCanvas
                 key={gameKey} // Re-mount component on level change

@@ -1,19 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from 'lucide-react';
 
 type GameUIProps = {
   level: number;
   par: number;
   strokes: number;
   power: number; // 0 to 100
+  onReset: () => void;
 };
 
-export function GameUI({ level, par, strokes, power }: GameUIProps) {
+export function GameUI({ level, par, strokes, power, onReset }: GameUIProps) {
   return (
     <>
       <div className="absolute top-4 left-4 z-10 text-foreground">
         <Card className="bg-background/80 backdrop-blur-sm">
-          <CardContent className="p-4">
+          <CardContent className="p-4 flex items-center space-x-4">
             <div className="flex items-center space-x-4">
               <div>
                 <p className="text-sm text-muted-foreground">Hole</p>
@@ -30,6 +33,10 @@ export function GameUI({ level, par, strokes, power }: GameUIProps) {
                 <p className="text-2xl font-bold">{strokes}</p>
               </div>
             </div>
+             <div className="h-10 border-l border-border"></div>
+             <Button variant="ghost" size="icon" onClick={onReset} aria-label="Reset Level">
+                <RotateCcw className="h-5 w-5" />
+            </Button>
           </CardContent>
         </Card>
       </div>
