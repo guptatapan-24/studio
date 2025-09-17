@@ -24,6 +24,9 @@ class Game {
   private aimDirection = new THREE.Vector3(0, 0, -1);
   private ballVelocity = new THREE.Vector3();
   private isHoleCompleted = false;
+  
+  // Constants
+  private gravity = new THREE.Vector3(0, -0.01, 0);
 
   // Callbacks
   private onStroke: () => void;
@@ -192,50 +195,52 @@ class Game {
   
   private checkCollisions() {
     const ballRadius = (this.ballMesh.geometry as THREE.SphereGeometry).parameters.radius;
-    
+    const groundLevel = 0.15; // Ball radius
+    let onSurface = false;
+
+    // Ground collision
+    if (this.ballMesh.position.y < groundLevel) {
+        this.ballMesh.position.y = groundLevel;
+        this.ballVelocity.y = -this.ballVelocity.y * 0.3; // Dampen bounce on ground
+        onSurface = true;
+    }
+
+    // Obstacle collision
     for (const obstacle of this.obstacles) {
-        // We use a Box3 helper, but we will transform the ball into the obstacle's local space
-        // This is a way to handle Oriented Bounding Box (OBB) collision
-        const obstacleBox = new THREE.Box3().setFromObject(obstacle);
         obstacle.updateWorldMatrix(true, false);
         const inverseObstacleMatrix = new THREE.Matrix4().copy(obstacle.matrixWorld).invert();
 
-        // Put the ball in the obstacle's local space
         const localBallPosition = this.ballMesh.position.clone().applyMatrix4(inverseObstacleMatrix);
         
-        const obstacleAABB = new THREE.Box3().setFromObject(obstacle, true);
-        const geometry = obstacle.geometry as THREE.BoxGeometry;
-        obstacleAABB.min.set(-geometry.parameters.width / 2, -geometry.parameters.height / 2, -geometry.parameters.depth / 2);
-        obstacleAABB.max.set(geometry.parameters.width / 2, geometry.parameters.height / 2, geometry.parameters.depth / 2);
+        const obstacleAABB = new THREE.Box3();
+        obstacle.geometry.computeBoundingBox();
+        obstacleAABB.copy(obstacle.geometry.boundingBox!);
 
-
-        // Check for intersection in local space
         if (obstacleAABB.intersectsSphere(new THREE.Sphere(localBallPosition, ballRadius))) {
             const closestPoint = new THREE.Vector3();
             obstacleAABB.clampPoint(localBallPosition, closestPoint);
             
             const collisionNormalLocal = localBallPosition.clone().sub(closestPoint).normalize();
             
-            // Now, transform the normal back to world space
             const collisionNormalWorld = collisionNormalLocal.clone().transformDirection(obstacle.matrixWorld);
 
-            // Reflect velocity
             this.ballVelocity.reflect(collisionNormalWorld);
-            this.ballVelocity.multiplyScalar(0.7); // Energy loss
+            this.ballVelocity.multiplyScalar(0.7); // Energy loss on collision
 
-            // Move the ball slightly out of the obstacle to prevent sticking
             this.ballMesh.position.add(collisionNormalWorld.multiplyScalar(0.01));
-
-            // We only handle one collision per frame for simplicity
-            return;
+            
+            if (collisionNormalWorld.y > 0) {
+              onSurface = true;
+            }
+            // No early return, check all obstacles
         }
     }
+    return onSurface;
   }
 
   private update() {
     if (this.isGamePaused()) return;
     
-    // Update charge power
     const chargeSpeed = 0.75;
     if (this.isCharging) {
         const newPower = Math.min(this.chargePower + chargeSpeed, 100);
@@ -243,7 +248,6 @@ class Game {
         this.setPower(newPower);
     }
     
-    // Update aim indicator
     this.aimLine.visible = !this.isBallMoving && !this.isHoleCompleted;
     if(this.aimLine.visible) {
         const startPoint = this.ballMesh.position;
@@ -251,25 +255,29 @@ class Game {
         this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
     }
     
-    // Update ball physics
     if (this.isBallMoving) {
+      // Apply gravity
+      this.ballVelocity.add(this.gravity);
+
       this.ballMesh.position.add(this.ballVelocity);
-      this.ballVelocity.multiplyScalar(0.97); // Friction
+      
+      const onSurface = this.checkCollisions();
 
-      this.checkCollisions();
+      // Apply friction only when on a surface
+      if(onSurface) {
+        this.ballVelocity.x *= 0.98;
+        this.ballVelocity.z *= 0.98;
+      }
 
-      // Check if ball has stopped
       if (this.ballVelocity.lengthSq() < 0.0001) {
           this.ballVelocity.set(0, 0, 0);
           this.isBallMoving = false;
       }
     }
     
-    // Check for hole completion
     if (!this.isHoleCompleted) {
       const distToHole = this.ballMesh.position.clone().setY(0).distanceTo(this.holeMesh.position.clone().setY(0));
       if (distToHole < this.level.holeRadius && this.ballVelocity.lengthSq() < 0.2) {
-        // Animate ball falling into hole
         const fallDirection = new THREE.Vector3().subVectors(this.holeMesh.position, this.ballMesh.position);
         fallDirection.y = -0.1;
         this.ballMesh.position.add(fallDirection.multiplyScalar(0.2));
@@ -351,8 +359,6 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     return () => {
       game.cleanup();
     };
-    // We want this effect to run ONLY when the level changes, to create a new game instance.
-    // All other props are passed as callbacks or refs to the Game class.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level]);
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { levels, type Level } from '@/lib/levels';
 import { GameUI } from '@/components/game/GameUI';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, Loader2 } from 'lucide-react';
+import { PartyPopper, Loader2, Home } from 'lucide-react';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
   ssr: false,
@@ -14,13 +15,30 @@ const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
 });
 
 export default function PlayPage() {
-  const [levelIndex, setLevelIndex] = useState(0);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [level, setLevel] = useState<Level | null>(null);
   const [strokes, setStrokes] = useState(0);
   const [power, setPower] = useState(0);
   const [isHoleComplete, setIsHoleComplete] = useState(false);
-  const [gameKey, setGameKey] = useState(Date.now()); // Used to force a re-render of the canvas
+  const [gameKey, setGameKey] = useState(Date.now());
 
-  const currentLevel = levels[levelIndex];
+  useEffect(() => {
+    const levelId = searchParams.get('level');
+    if (!levelId) {
+      router.replace('/levels');
+      return;
+    }
+    const levelData = levels.find(l => l.id === parseInt(levelId));
+    if (!levelData) {
+      router.replace('/levels');
+      return;
+    }
+    setLevel(levelData);
+    setStrokes(0);
+    setIsHoleComplete(false);
+    setGameKey(Date.now());
+  }, [searchParams, router]);
 
   const handleStroke = () => {
     if (isHoleComplete) return;
@@ -30,15 +48,19 @@ export default function PlayPage() {
   const handleHoleComplete = () => {
     if (!isHoleComplete) {
       setIsHoleComplete(true);
+      // Unlock next level
+      const currentLevelId = level?.id ?? 0;
+      if (currentLevelId > 0) {
+        const currentUnlocked = parseInt(localStorage.getItem('maxLevelUnlocked') || '1');
+        if (currentLevelId >= currentUnlocked) {
+            localStorage.setItem('maxLevelUnlocked', (currentLevelId + 1).toString());
+        }
+      }
     }
   };
 
-  const handleNextLevel = () => {
-    const nextLevelIndex = (levelIndex + 1) % levels.length;
-    setLevelIndex(nextLevelIndex);
-    setStrokes(0);
-    setIsHoleComplete(false);
-    setGameKey(Date.now()); // Change the key to force re-mount
+  const handleGoToLevels = () => {
+    router.push('/levels');
   };
 
   const handleReset = () => {
@@ -47,25 +69,35 @@ export default function PlayPage() {
     setGameKey(Date.now());
   }
 
+  if (!level) {
+    return (
+        <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="ml-4 text-muted-foreground">Loading level...</p>
+        </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background">
       <GameUI 
-        level={currentLevel.id} 
-        par={currentLevel.par} 
+        level={level.id} 
+        par={level.par} 
         strokes={strokes} 
         power={power}
         onReset={handleReset}
+        onGoToLevels={handleGoToLevels}
       />
-        <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-            <GolfCanvas
-                key={gameKey} // Re-mount component on level change
-                level={currentLevel}
-                onStroke={handleStroke}
-                onHoleComplete={handleHoleComplete}
-                setPower={setPower}
-                isGamePaused={isHoleComplete}
-            />
-        </Suspense>
+      <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
+          <GolfCanvas
+              key={gameKey}
+              level={level}
+              onStroke={handleStroke}
+              onHoleComplete={handleHoleComplete}
+              setPower={setPower}
+              isGamePaused={isHoleComplete}
+          />
+      </Suspense>
       {isHoleComplete && (
         <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center p-4">
           <Card className="max-w-sm text-center">
@@ -73,14 +105,15 @@ export default function PlayPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary mb-4">
                 <PartyPopper className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle>Hole Complete!</CardTitle>
+              <CardTitle>Hole {level.id} Complete!</CardTitle>
               <CardDescription>
-                You finished Hole {currentLevel.id} in {strokes} strokes (Par {currentLevel.par}).
+                You finished in {strokes} strokes (Par {level.par}).
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={handleNextLevel}>
-                {levelIndex < levels.length - 1 ? 'Next Level' : 'Play Again'}
+              <Button onClick={handleGoToLevels}>
+                <Home className="mr-2"/>
+                Back to Levels
               </Button>
             </CardContent>
           </Card>

@@ -19,9 +19,23 @@ export default function Home() {
               <span className="font-bold sm:inline-block">Web Golf</span>
             </Link>
           </div>
+           <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
+             <Link
+                href="/levels"
+                className="text-foreground/60 transition-colors hover:text-foreground/80"
+              >
+                Levels
+              </Link>
+             <Link
+                href="/design"
+                className="text-foreground/60 transition-colors hover:text-foreground/80"
+              >
+                Design
+              </Link>
+            </nav>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <Button asChild>
-              <Link href="/play">Play Now</Link>
+              <Link href="/levels">Play Now</Link>
             </Button>
           </div>
         </div>
@@ -50,7 +64,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex justify-center">
               <Button asChild size="lg" variant="secondary">
-                <Link href="/play">
+                <Link href="/levels">
                   Click to Play <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -117,12 +131,10 @@ export default function Home() {
                 <CardContent>
                   <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                     <li>
-                      <strong>Aim:</strong> Click and drag away from the ball to
-                      set direction and power.
+                      <strong>Aim:</strong> Use Left/Right arrow keys to set direction.
                     </li>
                     <li>
-                      <strong>Power:</strong> Drag farther from the ball to
-                      increase power. A visual bar shows shot strength.
+                      <strong>Power:</strong> Hold and release the Spacebar to shoot.
                     </li>
                     <li>
                       <strong>Camera:</strong> Use mouse or touch gestures to
@@ -138,14 +150,13 @@ export default function Home() {
                 <CardContent>
                   <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                     <li>
-                      Apply velocity to the ball; friction slows it until it
-                      stops.
+                      Get the ball in the hole in as few strokes as possible.
                     </li>
                     <li>
-                      Track strokes and detect when the ball reaches the hole.
+                      Complete a level to unlock the next one.
                     </li>
                     <li>
-                      Complete all levels to win!
+                      Complete all 10 levels to win!
                     </li>
                   </ul>
                 </CardContent>

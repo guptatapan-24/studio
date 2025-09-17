@@ -12,12 +12,12 @@ export function Header() {
             <span className="font-bold sm:inline-block">Web Golf</span>
           </Link>
         </div>
-        <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
+        <nav className="flex items-center space-x-6 text-sm font-medium">
           <Link
-            href="/play"
+            href="/levels"
             className="text-foreground/60 transition-colors hover:text-foreground/80"
           >
-            Play
+            Levels
           </Link>
           <Link
             href="/design"
@@ -26,9 +26,9 @@ export function Header() {
             Design
           </Link>
         </nav>
-        <div className="flex items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-4">
           <Button asChild>
-            <Link href="/play">Play Now</Link>
+            <Link href="/levels">Play Now</Link>
           </Button>
         </div>
       </div>
