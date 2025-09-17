@@ -172,7 +172,7 @@ class Game {
             return;
         }
 
-        const powerMultiplier = 0.04;
+        const powerMultiplier = 0.02; // Reduced power sensitivity
         this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
         this.isBallMoving = true;
         this.onStroke();
@@ -189,6 +189,22 @@ class Game {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
   };
+
+  private getCollisionNormal(ball: THREE.Mesh, obstacle: THREE.Mesh): THREE.Vector3 | null {
+    const ballBox = new THREE.Box3().setFromObject(ball);
+    const obstacleBox = new THREE.Box3().setFromObject(obstacle);
+    if (!ballBox.intersectsBox(obstacleBox)) return null;
+
+    const ballCenter = new THREE.Vector3();
+    ballBox.getCenter(ballCenter);
+    
+    const closestPoint = new THREE.Vector3();
+    obstacleBox.clampPoint(ballCenter, closestPoint);
+    
+    const normal = ballCenter.sub(closestPoint).normalize();
+    return normal;
+}
+
 
   private update() {
     if (this.isGamePaused()) return;
@@ -212,21 +228,14 @@ class Game {
     // Update ball physics
     if (this.isBallMoving) {
       this.ballMesh.position.add(this.ballVelocity);
-      this.ballVelocity.multiplyScalar(0.975); // Friction
+      this.ballVelocity.multiplyScalar(0.97); // Slightly increased friction
 
       // Obstacle collision
-      const ballBox = new THREE.Box3().setFromObject(this.ballMesh);
       this.obstacles.forEach(obstacle => {
-          const obstacleBox = new THREE.Box3().setFromObject(obstacle);
-          if (ballBox.intersectsBox(obstacleBox)) {
-              const ballCenter = new THREE.Vector3();
-              ballBox.getCenter(ballCenter);
-              const obstacleCenter = new THREE.Vector3();
-              obstacleBox.getCenter(obstacleCenter);
-              
-              const normal = ballCenter.sub(obstacleCenter).normalize();
+          const normal = this.getCollisionNormal(this.ballMesh, obstacle);
+          if (normal) {
               this.ballVelocity.reflect(normal);
-              this.ballVelocity.multiplyScalar(0.8); // Energy loss on bounce
+              this.ballVelocity.multiplyScalar(0.7); // Energy loss on bounce
           }
       });
 
@@ -325,5 +334,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
 
     
