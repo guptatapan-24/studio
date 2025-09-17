@@ -55,6 +55,7 @@ Course Description:
 - Determine the 'holePosition' array. The Y-coordinate should be 0.01.
 - Set a reasonable 'holeRadius', typically between 0.2 and 0.3.
 - Create an array of 'obstacles'. Each obstacle must have a 'type', 'position', 'size', and an optional 'rotation'. A 'ramp' is just a 'box' with a rotation on the X or Z axis. Infer the dimensions and placement from the text.
+- IMPORTANT: To ensure good performance, generate a maximum of 10 obstacles.
 - Be creative but stay true to the description. If specific dimensions aren't given, estimate them based on context (e.g., a "small pond" might be 4x1x6 units).
 - The entire playable area should generally be within -25 to 25 on the X and Z axes.
 - A "wall" is a 'box' obstacle. A "ramp" is a 'box' obstacle with rotation.

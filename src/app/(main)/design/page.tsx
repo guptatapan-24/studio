@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { designCourse, type CourseDesignOutput } from '@/ai/flows/course-design-tool';
 import { visualizeCourse, type VisualizeCourseOutput } from '@/ai/flows/visualize-course-flow';
 
@@ -27,7 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Wand2 } from 'lucide-react';
+import { Loader2, Wand2, Play } from 'lucide-react';
 import type { Level } from '@/lib/levels';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
@@ -102,6 +103,12 @@ export default function DesignPage() {
       setIsVisualizing(false);
     }
   }
+  
+   const handlePlayFullScreen = () => {
+    if (visualizationResult) {
+      localStorage.setItem('customLevel', JSON.stringify(visualizationResult));
+    }
+  };
 
   return (
     <div className="container py-8">
@@ -253,11 +260,19 @@ export default function DesignPage() {
                                 onStroke={() => {}}
                                 onHoleComplete={() => {}}
                                 setPower={() => {}}
-                                isGamePaused={false}
+                                isGamePaused={true}
                             />
                         </Suspense>
                     </div>
                 </CardContent>
+                 <CardFooter className="flex-col items-start gap-4">
+                    <Button asChild onClick={handlePlayFullScreen}>
+                        <Link href="/play?level=custom">
+                        <Play className="mr-2 h-4 w-4" />
+                        Play in Full Screen
+                        </Link>
+                    </Button>
+                 </CardFooter>
             </Card>
         )}
       </div>

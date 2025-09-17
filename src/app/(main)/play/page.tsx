@@ -25,15 +25,26 @@ export default function PlayPage() {
 
   useEffect(() => {
     const levelId = searchParams.get('level');
-    if (!levelId) {
-      router.replace('/levels');
-      return;
+    let levelData: Level | undefined | null = null;
+    
+    if (levelId === 'custom') {
+        const customLevelData = localStorage.getItem('customLevel');
+        if (customLevelData) {
+            levelData = JSON.parse(customLevelData);
+        } else {
+            // If no custom level data, redirect
+            router.replace('/design');
+            return;
+        }
+    } else if (levelId) {
+        levelData = levels.find(l => l.id === parseInt(levelId));
     }
-    const levelData = levels.find(l => l.id === parseInt(levelId));
+
     if (!levelData) {
       router.replace('/levels');
       return;
     }
+    
     setLevel(levelData);
     setStrokes(0);
     setIsHoleComplete(false);
@@ -48,9 +59,9 @@ export default function PlayPage() {
   const handleHoleComplete = () => {
     if (!isHoleComplete) {
       setIsHoleComplete(true);
-      // Unlock next level
+      // Unlock next level only for official levels
       const currentLevelId = level?.id ?? 0;
-      if (currentLevelId > 0) {
+      if (currentLevelId > 0 && currentLevelId !== 99) { // 99 is custom
         const currentUnlocked = parseInt(localStorage.getItem('maxLevelUnlocked') || '1');
         if (currentLevelId >= currentUnlocked) {
             localStorage.setItem('maxLevelUnlocked', (currentLevelId + 1).toString());
@@ -61,6 +72,10 @@ export default function PlayPage() {
 
   const handleGoToLevels = () => {
     router.push('/levels');
+  };
+  
+  const handleGoToDesign = () => {
+    router.push('/design');
   };
 
   const handleReset = () => {
@@ -86,7 +101,8 @@ export default function PlayPage() {
         strokes={strokes} 
         power={power}
         onReset={handleReset}
-        onGoToLevels={handleGoToLevels}
+        onGoToLevels={level.id === 99 ? handleGoToDesign : handleGoToLevels}
+        isCustomLevel={level.id === 99}
       />
       <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
           <GolfCanvas
@@ -105,15 +121,15 @@ export default function PlayPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary mb-4">
                 <PartyPopper className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle>Hole {level.id} Complete!</CardTitle>
+              <CardTitle>Hole {level.id === 99 ? 'Custom' : level.id} Complete!</CardTitle>
               <CardDescription>
                 You finished in {strokes} strokes (Par {level.par}).
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={handleGoToLevels}>
+              <Button onClick={level.id === 99 ? handleGoToDesign : handleGoToLevels}>
                 <Home className="mr-2"/>
-                Back to Levels
+                {level.id === 99 ? 'Back to Designer' : 'Back to Levels'}
               </Button>
             </CardContent>
           </Card>

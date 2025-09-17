@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Home } from 'lucide-react';
+import { RotateCcw, Home, Wand2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -16,9 +16,10 @@ type GameUIProps = {
   power: number; // 0 to 100
   onReset: () => void;
   onGoToLevels: () => void;
+  isCustomLevel?: boolean;
 };
 
-export function GameUI({ level, par, strokes, power, onReset, onGoToLevels }: GameUIProps) {
+export function GameUI({ level, par, strokes, power, onReset, onGoToLevels, isCustomLevel = false }: GameUIProps) {
   return (
     <TooltipProvider>
       <div className="absolute top-4 left-4 z-10 text-foreground">
@@ -26,19 +27,19 @@ export function GameUI({ level, par, strokes, power, onReset, onGoToLevels }: Ga
           <CardContent className="p-3 sm:p-4 flex items-center space-x-2 sm:space-x-4">
              <Tooltip>
                 <TooltipTrigger asChild>
-                   <Button variant="ghost" size="icon" onClick={onGoToLevels} aria-label="Back to Levels">
-                      <Home className="h-5 w-5" />
+                   <Button variant="ghost" size="icon" onClick={onGoToLevels} aria-label={isCustomLevel ? "Back to Designer" : "Back to Levels"}>
+                      {isCustomLevel ? <Wand2 className="h-5 w-5" /> : <Home className="h-5 w-5" />}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Back to Levels</p>
+                  <p>{isCustomLevel ? "Back to Designer" : "Back to Levels"}</p>
                 </TooltipContent>
               </Tooltip>
             <div className="h-10 border-l border-border"></div>
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Hole</p>
-                <p className="text-xl sm:text-2xl font-bold">{level}</p>
+                <p className="text-xl sm:text-2xl font-bold">{isCustomLevel ? "AI" : level}</p>
               </div>
               <div className="h-10 border-l border-border"></div>
               <div>
