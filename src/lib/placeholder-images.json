@@ -1,9 +1,10 @@
+
 {
   "placeholderImages": [
     {
       "id": "hero-golf-course",
       "description": "A beautiful view of a golf course on a sunny day, used for the hero section.",
-      "imageUrl": "https://picsum.photos/seed/golf1/1200/600",
+      "imageUrl": "https://picsum.photos/seed/golf-hero/1200/800",
       "imageHint": "golf course"
     }
   ]

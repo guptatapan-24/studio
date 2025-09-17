@@ -73,6 +73,49 @@ export default function Home() {
         </section>
 
         <div className="container py-12 md:py-20 space-y-16">
+          <section id="how-to-play" className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-center">How to Play</h2>
+            <div className="mt-8 grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Controls</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                    <li>
+                      <strong>Aim:</strong> Use Left/Right arrow keys to set direction.
+                    </li>
+                    <li>
+                      <strong>Power:</strong> Hold and release the Spacebar to shoot.
+                    </li>
+                    <li>
+                      <strong>Camera:</strong> Use mouse or touch gestures to
+                      orbit, pan, and zoom.
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gameplay</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                    <li>
+                      Get the ball in the hole in as few strokes as possible.
+                    </li>
+                    <li>
+                      Complete a level to unlock the next one.
+                    </li>
+                    <li>
+                      Complete all 10 levels to win!
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
           <section id="background">
             <h2 className="text-3xl font-bold text-center">Background</h2>
             <p className="mt-4 max-w-3xl mx-auto text-center text-muted-foreground">
@@ -118,49 +161,6 @@ export default function Home() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </section>
-
-          <section id="how-to-play" className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center">How to Play</h2>
-            <div className="mt-8 grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Controls</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                    <li>
-                      <strong>Aim:</strong> Use Left/Right arrow keys to set direction.
-                    </li>
-                    <li>
-                      <strong>Power:</strong> Hold and release the Spacebar to shoot.
-                    </li>
-                    <li>
-                      <strong>Camera:</strong> Use mouse or touch gestures to
-                      orbit, pan, and zoom.
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gameplay</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                    <li>
-                      Get the ball in the hole in as few strokes as possible.
-                    </li>
-                    <li>
-                      Complete a level to unlock the next one.
-                    </li>
-                    <li>
-                      Complete all 10 levels to win!
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
             </div>
           </section>
         </div>
