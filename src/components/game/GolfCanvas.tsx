@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useCallback } from 'react';
@@ -16,11 +17,10 @@ type GolfCanvasProps = {
 const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   
-  // Using refs for values that change frequently in the animation loop
-  // to avoid re-renders and stale state in callbacks.
   const state = useRef({
     isBallMoving: false,
     isCharging: false,
+    chargePower: 0, // Keep track of power internally
     aimDirection: new THREE.Vector3(0, 0, -1),
     ballVelocity: new THREE.Vector3(),
     ballMesh: null as THREE.Mesh | null,
@@ -28,7 +28,6 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     isHoleCompleted: false,
   }).current;
 
-  // Memoize callbacks to prevent re-creating functions on every render
   const memoizedOnStroke = useCallback(onStroke, [onStroke]);
   const memoizedOnHoleComplete = useCallback(() => {
     if (!state.isHoleCompleted) {
@@ -41,7 +40,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     if (!mountRef.current) return;
     
     const currentMount = mountRef.current;
-    state.isHoleCompleted = false; // Reset on level change
+    state.isHoleCompleted = false; 
 
     // --- Scene Setup ---
     const scene = new THREE.Scene();
@@ -59,7 +58,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     // --- Controls ---
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent camera from going under ground
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; 
     controls.target.set(level.startPosition[0], level.startPosition[1], level.startPosition[2]);
 
     // --- Lighting ---
@@ -135,6 +134,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
                 event.preventDefault();
                 if (!state.isCharging) {
                     state.isCharging = true;
+                    state.chargePower = 0;
                     setPower(0);
                 }
                 break;
@@ -147,23 +147,19 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         if (event.key === ' ' && state.isCharging && state.ballMesh) {
             event.preventDefault();
             
-            const power = parseFloat(renderer.domElement.style.getPropertyValue('--power-charge') || '0');
-            
-            if (power < 5) { // Ignore tiny taps
+            if (state.chargePower < 5) { 
                 state.isCharging = false;
                 setPower(0);
-                renderer.domElement.style.setProperty('--power-charge', '0');
                 return;
             }
 
-            state.ballVelocity.copy(state.aimDirection).multiplyScalar(power * 0.05);
+            state.ballVelocity.copy(state.aimDirection).multiplyScalar(state.chargePower * 0.05);
             state.isBallMoving = true;
             memoizedOnStroke();
 
-            // Reset charge state
             state.isCharging = false;
             setPower(0);
-            renderer.domElement.style.setProperty('--power-charge', '0');
+            state.chargePower = 0;
         }
     }
 
@@ -182,15 +178,13 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      const chargeSpeed = 0.5; // Controls how fast power bar fills up
+      const chargeSpeed = 0.5; 
       if (state.isCharging) {
-          const currentPower = parseFloat(renderer.domElement.style.getPropertyValue('--power-charge') || '0');
-          const newPower = Math.min(currentPower + chargeSpeed, 100);
-          renderer.domElement.style.setProperty('--power-charge', newPower.toString());
+          const newPower = Math.min(state.chargePower + chargeSpeed, 100);
+          state.chargePower = newPower;
           setPower(newPower);
       }
 
-      // Update aim indicator
       if (state.ballMesh && aimLine) {
         aimLine.visible = !state.isBallMoving && !state.isHoleCompleted && !isGamePaused;
         if(aimLine.visible) {
@@ -222,7 +216,6 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         }
       }
       
-      // Check for goal
       if (state.ballMesh && state.holeMesh && !state.isHoleCompleted && !isGamePaused) {
         const distToHole = state.ballMesh.position.distanceTo(state.holeMesh.position);
         if (distToHole < level.holeRadius && state.ballVelocity.lengthSq() < 0.1) {
@@ -244,9 +237,10 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
-      currentMount.removeChild(renderer.domElement);
+      if (currentMount && renderer.domElement) {
+        currentMount.removeChild(renderer.domElement);
+      }
       
-      // Dispose of Three.js objects to prevent memory leaks
       scene.traverse(object => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
@@ -266,3 +260,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
