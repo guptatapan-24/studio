@@ -7,8 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { levels, type Level } from '@/lib/levels';
 import { GameUI } from '@/components/game/GameUI';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, Loader2, Home } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { PartyPopper, Loader2, Home, RotateCcw, ArrowRight } from 'lucide-react';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
   ssr: false,
@@ -75,7 +75,6 @@ export default function PlayPage() {
   const handleHoleComplete = () => {
     if (!isHoleComplete) {
       setIsHoleComplete(true);
-      // Unlocking logic removed
     }
   };
 
@@ -92,6 +91,17 @@ export default function PlayPage() {
     setIsHoleComplete(false);
     setGameKey(Date.now());
   }
+
+  const handleNextLevel = () => {
+    if (!level || level.id === 99) return;
+    const nextLevelId = level.id + 1;
+    if (nextLevelId <= levels.length) {
+      router.push(`/play?level=${nextLevelId}`);
+    } else {
+      router.push('/levels');
+    }
+  };
+
 
   if (!level) {
     return (
@@ -135,8 +145,18 @@ export default function PlayPage() {
                 You finished in {strokes} strokes (Par {level.par}).
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={level.id === 99 ? handleGoToDesign : handleGoToLevels}>
+            <CardContent className="flex flex-col space-y-2">
+              {level.id !== 99 && level.id < levels.length && (
+                <Button onClick={handleNextLevel}>
+                  <ArrowRight className="mr-2"/>
+                  Next Level
+                </Button>
+              )}
+               <Button onClick={handleReset} variant="secondary">
+                  <RotateCcw className="mr-2"/>
+                  Replay Level
+              </Button>
+              <Button onClick={level.id === 99 ? handleGoToDesign : handleGoToLevels} variant="outline">
                 <Home className="mr-2"/>
                 {level.id === 99 ? 'Back to Designer' : 'Back to Levels'}
               </Button>
