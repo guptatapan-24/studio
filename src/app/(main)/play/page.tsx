@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { levels, type Level } from '@/lib/levels';
@@ -9,6 +9,8 @@ import { GameUI } from '@/components/game/GameUI';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { PartyPopper, Loader2, Home, RotateCcw, ArrowRight } from 'lucide-react';
+import type { Game } from '@/components/game/GolfCanvas';
+import { MobileControls } from '@/components/game/MobileControls';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
   ssr: false,
@@ -24,6 +26,7 @@ export default function PlayPage() {
   const [isHoleComplete, setIsHoleComplete] = useState(false);
   const [gameKey, setGameKey] = useState(Date.now());
   const isCustomLevel = searchParams.get('level') === 'custom';
+  const gameRef = useRef<Game | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -131,8 +134,15 @@ export default function PlayPage() {
               onHoleComplete={handleHoleComplete}
               setPower={setPower}
               isGamePaused={isHoleComplete}
+              gameRef={gameRef}
           />
       </Suspense>
+       <MobileControls
+        onAimLeft={() => gameRef.current?.aimLeft()}
+        onAimRight={() => gameRef.current?.aimRight()}
+        onPowerChargeStart={() => gameRef.current?.startPowerCharge()}
+        onPowerChargeRelease={() => gameRef.current?.releasePowerCharge()}
+      />
       {isHoleComplete && (
         <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center p-4">
           <Card className="max-w-sm text-center">

@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Level } from '@/lib/levels';
 
 // --- A dedicated class to manage the Three.js game world ---
-class Game {
+export class Game {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
@@ -142,49 +142,66 @@ class Game {
     window.addEventListener('resize', this.handleResize);
   }
 
-  private handleKeyDown = (event: KeyboardEvent) => {
+  public aimLeft() {
     if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
-    
+    this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
+  }
+
+  public aimRight() {
+    if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
+    this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
+  }
+
+  public startPowerCharge() {
+    if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
+    if (!this.isCharging) {
+        this.isCharging = true;
+    }
+  }
+
+  public releasePowerCharge() {
+      if (this.isGamePaused() || this.isHoleCompleted) return;
+      if (!this.isCharging) return;
+      
+      if (this.chargePower < 5) { // Cancel shot if not enough power
+          this.isCharging = false;
+          this.setPower(0);
+          this.chargePower = 0;
+          return;
+      }
+
+      const powerMultiplier = 0.0025;
+      this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
+      this.isBallMoving = true;
+      this.onStroke();
+
+      // Reset charge state AFTER the shot is taken
+      this.isCharging = false;
+      this.setPower(0);
+      this.chargePower = 0;
+  }
+
+  private handleKeyDown = (event: KeyboardEvent) => {
     switch(event.key.toLowerCase()) {
         case 'arrowleft':
             event.preventDefault();
-            this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
+            this.aimLeft();
             break;
         case 'arrowright':
             event.preventDefault();
-            this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
+            this.aimRight();
             break;
-        case ' ': // Changed from 'p' to spacebar
+        case ' ':
             event.preventDefault();
-            if (!this.isCharging) {
-                this.isCharging = true;
-            }
+            this.startPowerCharge();
             break;
     }
   }
 
   private handleKeyUp = (event: KeyboardEvent) => {
-    if (this.isGamePaused() || this.isHoleCompleted) return;
-    
-    if (event.key.toLowerCase() === ' ' && this.isCharging) { // Changed from 'p' to spacebar
+    if (event.key.toLowerCase() === ' ') {
         event.preventDefault();
-        
-        if (this.chargePower < 5) { // Cancel shot if not enough power
-            this.isCharging = false;
-            this.setPower(0);
-            this.chargePower = 0;
-            return;
-        }
-
-        const powerMultiplier = 0.0025;
-        this.ballVelocity.copy(this.aimDirection).multiplyScalar(this.chargePower * powerMultiplier);
-        this.isBallMoving = true;
-        this.onStroke();
-
-        // Reset charge state AFTER the shot is taken
-        this.isCharging = false;
-        this.setPower(0);
-        this.chargePower = 0;
+        this.releasePowerCharge();
     }
   }
 
@@ -347,9 +364,10 @@ type GolfCanvasProps = {
   onHoleComplete: () => void;
   setPower: (power: number) => void;
   isGamePaused?: boolean;
+  gameRef?: MutableRefObject<Game | null>;
 };
 
-const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false }) => {
+const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false, gameRef }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const isGamePausedRef = useRef(isGamePaused);
 
@@ -366,11 +384,18 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
         setPower,
         isGamePaused: () => isGamePausedRef.current,
     });
+
+    if (gameRef) {
+        gameRef.current = game;
+    }
     
     game.animate();
 
     return () => {
       game.cleanup();
+      if (gameRef) {
+        gameRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level]); // Key change: This effect now ONLY re-runs if the level itself changes.
@@ -379,6 +404,3 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
-
-    
-    
