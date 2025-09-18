@@ -1,3 +1,4 @@
+
 "use server";
 
 import {
@@ -8,7 +9,7 @@ import {
 import { auth, db } from "./firebase";
 import { doc, setDoc } from "firebase/firestore";
 
-export async function signUp(email: string, password: string):Promise<{error?: string}> {
+export async function signUp(email: string, password: string, displayName: string):Promise<{error?: string}> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -16,6 +17,7 @@ export async function signUp(email: string, password: string):Promise<{error?: s
     // Create a new document in the 'users' collection with the user's UID
     await setDoc(doc(db, "users", user.uid), {
       email: user.email,
+      displayName: displayName,
       createdAt: new Date(),
     });
 

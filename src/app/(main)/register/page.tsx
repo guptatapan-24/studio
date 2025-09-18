@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
+  displayName: z.string().min(3, 'Display name must be at least 3 characters.'),
   email: z.string().email('Invalid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
   confirmPassword: z.string(),
@@ -47,6 +48,7 @@ export default function RegisterPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      displayName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -55,7 +57,7 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { error } = await signUp(values.email, values.password);
+    const { error } = await signUp(values.email, values.password, values.displayName);
 
     if (error) {
       toast({
@@ -84,6 +86,19 @@ export default function RegisterPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="PlayerOne" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"

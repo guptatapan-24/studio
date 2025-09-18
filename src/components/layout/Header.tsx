@@ -5,21 +5,34 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, User as UserIcon } from 'lucide-react';
 import { MainNav } from '@/components/layout/MainNav';
 import { GolfFlagIcon } from '../icons/GolfFlagIcon';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/auth';
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
     router.refresh();
+  }
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "?";
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   }
 
   return (
@@ -35,11 +48,31 @@ export function Header() {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          {user ? (
-             <Button variant="ghost" onClick={handleSignOut}>
-                <LogOut className="mr-2" />
-                Logout
-            </Button>
+          {user && userProfile ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-9 w-9">
+                     <AvatarFallback>{getInitials(userProfile.displayName)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userProfile.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {userProfile.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Button asChild variant="ghost" className="hidden sm:inline-flex">
@@ -66,10 +99,21 @@ export function Header() {
                 <MainNav isMobile={true} />
                  <div className="flex flex-col gap-4 pt-4 border-t">
                     {user ? (
-                        <Button variant="ghost" onClick={handleSignOut} className="justify-start">
-                            <LogOut className="mr-2" />
-                            Logout
-                        </Button>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-center gap-2">
+                             <Avatar>
+                               <AvatarFallback>{getInitials(userProfile?.displayName)}</AvatarFallback>
+                             </Avatar>
+                             <div>
+                                <p className="text-sm font-medium">{userProfile?.displayName}</p>
+                                <p className="text-xs text-muted-foreground">{userProfile?.email}</p>
+                             </div>
+                          </div>
+                          <Button variant="ghost" onClick={handleSignOut} className="justify-start">
+                              <LogOut className="mr-2" />
+                              Logout
+                          </Button>
+                        </div>
                     ) : (
                         <>
                             <Button asChild variant="ghost" className="justify-start text-lg">

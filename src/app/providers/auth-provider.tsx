@@ -1,20 +1,29 @@
+
 "use client";
 
 import { useState, useEffect, createContext } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { getUserProfile, type UserProfile } from '@/lib/user';
 import { Loader2 } from 'lucide-react';
 
-export const AuthContext = createContext<{ user: User | null, isLoading: boolean }>({ user: null, isLoading: true });
+export const AuthContext = createContext<{ user: User | null; userProfile: UserProfile | null; isLoading: boolean }>({ user: null, userProfile: null, isLoading: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
       setIsLoading(false);
     });
 
@@ -30,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading }}>
+    <AuthContext.Provider value={{ user, userProfile, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
