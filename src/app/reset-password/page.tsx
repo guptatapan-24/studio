@@ -18,10 +18,9 @@ import Link from 'next/link';
 import { GolfFlagIcon } from '@/components/icons/GolfFlagIcon';
 
 async function handlePasswordReset(email: string): Promise<{ error: any }> {
-    'use server';
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `http://localhost:9002/auth/callback?next=/`,
+        redirectTo: `${location.origin}/auth/callback?next=/`,
     });
     return { error };
 }
