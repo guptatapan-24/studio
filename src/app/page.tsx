@@ -24,25 +24,25 @@ export default function Home() {
               fill
               className="object-cover"
               priority
+              quality={100}
               data-ai-hint={heroImage.imageHint}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
-            <div className="relative z-10 p-4 max-w-4xl mx-auto flex flex-col items-center justify-center h-full">
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tighter [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">
-                  CloneFest 2025
-                </h1>
-                <p className="mt-4 text-lg md:text-xl text-white/90 [text-shadow:1px_1px_2px_rgba(0,0,0,0.5)]">
-                  An interactive 3D minigolf experience, ported from a C-based classic to the modern web with Next.js and Three.js.
-                </p>
-                <div className="mt-8 flex justify-center">
-                  <Button asChild size="lg">
-                    <Link href="/levels">
-                      Play Now <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-                </div>
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+          <div className="relative z-10 p-4 max-w-4xl mx-auto flex flex-col items-center justify-center h-full">
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tighter [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">
+                CloneFest 2025
+              </h1>
+              <p className="mt-4 text-lg md:text-xl text-white/90 [text-shadow:1px_1px_2px_rgba(0,0,0,0.5)]">
+                An interactive 3D minigolf experience, ported from a C-based classic to the modern web with Next.js and Three.js.
+              </p>
+              <div className="mt-8 flex justify-center">
+                <Button asChild size="lg">
+                  <Link href="/levels">
+                    Play Now <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
           </div>
         </section>
 
