@@ -66,7 +66,7 @@ export function GameUI({ level, par, strokes, power, onReset, onGoToLevels, isCu
           </CardContent>
         </Card>
       </div>
-      <div className="absolute bottom-4 lg:bottom-4 left-1/2 -translate-x-1/2 z-10 w-64 lg:bottom-4 bottom-28">
+      <div className="absolute bottom-4 lg:bottom-4 left-1/2 -translate-x-1/2 z-10 w-64 lg:bottom-4 bottom-36">
         <Card className="bg-background/80 backdrop-blur-sm">
           <CardContent className="p-3">
              <label htmlFor="power" className="text-sm font-medium mb-2 block text-center">Power</label>
