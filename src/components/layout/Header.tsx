@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LogOut, Menu, User } from 'lucide-react';
 import { MainNav } from '@/components/layout/MainNav';
 import { GolfFlagIcon } from '../icons/GolfFlagIcon';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import {
@@ -23,7 +23,6 @@ import { useRouter } from 'next/navigation';
 
 export function Header() {
   const router = useRouter();
-  const supabase = createClient();
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
   useEffect(() => {

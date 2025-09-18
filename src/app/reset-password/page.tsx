@@ -12,13 +12,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { Mail } from 'lucide-react';
 import Link from 'next/link';
 import { GolfFlagIcon } from '@/components/icons/GolfFlagIcon';
 
 async function handlePasswordReset(email: string): Promise<{ error: any }> {
-    const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${location.origin}/auth/callback?next=/`,
     });

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import Link from "next/link";
@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect } from "react";
 
 export default function LoginPage() {
-  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   const message = searchParams.get("message");
