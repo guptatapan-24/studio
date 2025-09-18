@@ -15,7 +15,7 @@ export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
     },
     {
       href: "/design",
-      label: "Design a Course",
+      label: "Design Your Own Golf Course",
     },
   ]
 
