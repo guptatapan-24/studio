@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-golf-course",
-      "description": "A beautiful view of a golf course on a sunny day, used for the hero section.",
-      "imageUrl": "https://picsum.photos/seed/1/1200/800",
-      "imageHint": "golf course green"
+      "description": "A plain green ground, used for the hero section.",
+      "imageUrl": "https://picsum.photos/seed/2/1200/800",
+      "imageHint": "green ground"
     }
   ]
 }
