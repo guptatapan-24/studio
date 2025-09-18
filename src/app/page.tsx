@@ -1,5 +1,6 @@
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,12 +27,12 @@ export default function Home() {
               data-ai-hint={heroImage.imageHint}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-shadow-lg">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter [text-shadow:0_2px_4px_rgba(0,0,0,0.7)]">
               CloneFest 2025
             </h1>
-            <p className="mt-4 text-lg md:text-xl text-white/90 text-shadow">
+            <p className="mt-4 text-lg md:text-xl text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
               An interactive 3D minigolf experience, ported from a C-based classic to the modern web with Next.js and Three.js.
             </p>
             <div className="mt-8 flex justify-center">
