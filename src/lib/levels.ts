@@ -114,11 +114,11 @@ export const levels: Level[] = [
     par: 4,
     difficulty: 'Hard',
     startPosition: [-5, 0.2, 12],
-    holePosition: [5, 2.01, -12],
+    holePosition: [5, 1.51, -12],
     holeRadius: 0.25,
     obstacles: [
-        { type: 'ramp', position: [0, 0, 0], size: [4, 1, 8], rotation: [-0.1, 0.2, 0] },
-        { type: 'ramp', position: [0, 1, -10], size: [4, 1, 8], rotation: [0.1, -0.2, 0] },
+        { type: 'ramp', position: [0, 0, 2], size: [4, 1, 8], rotation: [-0.15, 0.2, 0] },
+        { type: 'ramp', position: [2, 0.75, -8], size: [4, 1, 8], rotation: [0.1, -0.2, 0] },
     ],
   },
   {
