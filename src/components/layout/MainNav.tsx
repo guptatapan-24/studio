@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -15,7 +16,7 @@ export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
     },
     {
       href: "/design",
-      label: "Design Your Own Golf Course",
+      label: "DesignYourOwnGolfCourse",
     },
   ]
 
