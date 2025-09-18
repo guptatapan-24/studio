@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { PartyPopper, Loader2, Home, RotateCcw, ArrowRight } from 'lucide-react';
 import type { Game } from '@/components/game/GolfCanvas';
 import { MobileControls } from '@/components/game/MobileControls';
+import { updateBestScore } from '@/lib/supabase/scores';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
   ssr: false,
@@ -75,9 +76,13 @@ export default function PlayPage() {
     setStrokes((prev) => prev + 1);
   };
 
-  const handleHoleComplete = () => {
+  const handleHoleComplete = async () => {
     if (!isHoleComplete) {
       setIsHoleComplete(true);
+      if (level && level.id !== 99) {
+        // Don't await, just fire and forget
+        updateBestScore(level.id, strokes + 1); // strokes is not yet updated, so add 1
+      }
     }
   };
 
