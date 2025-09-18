@@ -108,7 +108,7 @@ export default function PlayPage() {
 
   if (!level) {
     return (
-        <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background flex items-center justify-center">
+        <div className="relative w-full h-dvh overflow-hidden bg-background flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
             <p className="ml-4 text-muted-foreground">Loading level...</p>
         </div>
@@ -116,7 +116,7 @@ export default function PlayPage() {
   }
 
   return (
-    <div className="relative w-full h-[calc(100dvh-4rem)] overflow-hidden bg-background">
+    <div className="relative w-full h-dvh overflow-hidden bg-background">
       <GameUI 
         level={level.id} 
         par={level.par} 
