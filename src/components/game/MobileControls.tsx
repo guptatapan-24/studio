@@ -25,8 +25,9 @@ export function MobileControls({
           <Button
             variant="outline"
             size="icon"
-            className="h-16 w-16 rounded-full bg-background/50 backdrop-blur-sm"
-            onPointerDown={onAimLeft}
+            className="h-16 w-16 rounded-full bg-background/50 backdrop-blur-sm touch-action-none"
+            onPointerDown={(e) => { e.preventDefault(); onAimLeft(); }}
+            onContextMenu={(e) => e.preventDefault()}
             aria-label="Aim Left"
           >
             <ArrowLeft className="h-8 w-8" />
@@ -34,8 +35,9 @@ export function MobileControls({
           <Button
             variant="outline"
             size="icon"
-            className="h-16 w-16 rounded-full bg-background/50 backdrop-blur-sm"
-            onPointerDown={onAimRight}
+            className="h-16 w-16 rounded-full bg-background/50 backdrop-blur-sm touch-action-none"
+            onPointerDown={(e) => { e.preventDefault(); onAimRight(); }}
+            onContextMenu={(e) => e.preventDefault()}
             aria-label="Aim Right"
           >
             <ArrowRight className="h-8 w-8" />
@@ -45,10 +47,12 @@ export function MobileControls({
         {/* Power Button */}
         <Button
           size="icon"
-          className="h-24 w-24 rounded-full text-primary-foreground text-lg font-bold shadow-lg"
-          onPointerDown={onPowerChargeStart}
-          onPointerUp={onPowerChargeRelease}
-          onPointerLeave={onPowerChargeRelease} // Release if finger slides off
+          className="h-24 w-24 rounded-full text-primary-foreground text-lg font-bold shadow-lg touch-action-none"
+          onPointerDown={(e) => { e.preventDefault(); onPowerChargeStart(); }}
+          onPointerUp={(e) => { e.preventDefault(); onPowerChargeRelease(); }}
+          onPointerLeave={(e) => { e.preventDefault(); onPowerChargeRelease(); }}
+          onContextMenu={(e) => e.preventDefault()}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
           aria-label="Hold to charge power, release to shoot"
         >
           <div className="flex flex-col items-center">
