@@ -21,7 +21,7 @@ async function handlePasswordReset(email: string): Promise<{ error: any }> {
     'use server';
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/`,
+        redirectTo: `http://localhost:9002/auth/callback?next=/`,
     });
     return { error };
 }
