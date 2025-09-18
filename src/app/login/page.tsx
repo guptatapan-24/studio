@@ -30,7 +30,6 @@ export default function LoginPage() {
               appearance={{ theme: ThemeSupa }}
               providers={[]}
               theme="dark"
-              redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/levels`}
             />
           </CardContent>
         </Card>
