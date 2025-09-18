@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCuRLeR5S7xaU2Ieymb9BedCs0IWu16GaU",
+  authDomain: "golf-game-17243678-9965e.firebaseapp.com",
+  projectId: "golf-game-17243678-9965e",
+  storageBucket: "golf-game-17243678-9965e.appspot.com",
+  messagingSenderId: "155274901018",
+  appId: "1:155274901018:web:61fd6bf46fc6f7335e43a3",
 };
 
 // Initialize Firebase
