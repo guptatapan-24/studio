@@ -1,3 +1,4 @@
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -9,8 +10,9 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    // TODO: Replace with your Supabase project's URL and anon key
+    "YOUR_SUPABASE_URL_HERE"!,
+    "YOUR_SUPABASE_ANON_KEY_HERE"!,
     {
       cookies: {
         get(name: string) {
@@ -58,8 +60,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // if user is not signed in and the current path is not /login, redirect the user to /login
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+  const protectedPaths = ['/levels', '/design', '/play'];
+
+  // if user is not signed in and the current path is protected, redirect the user to /login
+  if (!user && protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))) {
      const url = request.nextUrl.clone()
      url.pathname = '/login'
     return NextResponse.redirect(url)

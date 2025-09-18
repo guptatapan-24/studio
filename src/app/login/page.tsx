@@ -1,12 +1,15 @@
+
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import Link from "next/link";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -30,8 +33,17 @@ export default function LoginPage() {
               appearance={{ theme: ThemeSupa }}
               providers={[]}
               theme="dark"
+              showLinks={false}
             />
           </CardContent>
+          <CardFooter className="justify-center text-sm">
+             <Link href="/reset-password"
+                className="font-medium text-primary hover:underline"
+                prefetch={false}
+              >
+                Forgot your password?
+              </Link>
+          </CardFooter>
         </Card>
       </div>
     </div>
