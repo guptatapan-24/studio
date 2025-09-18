@@ -1,52 +1,54 @@
 
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-import type { NextRequest } from 'next/server'
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
 
-export async function updateSession(req: NextRequest) {
-  // This `try/catch` block is only here for the interactive tutorial.
-  // Feel free to remove once you have Supabase connected.
-  try {
-    // Create an unmodified response
-    let res = NextResponse.next({
-      request: {
-        headers: req.headers,
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
       },
-    })
-
-    const supabase = createMiddlewareClient({ req, res })
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    // If the user is signed in and the current path is /login, redirect to /levels
-    if (user && req.nextUrl.pathname === '/login') {
-      return NextResponse.redirect(new URL('/levels', req.url))
     }
+  )
 
-    const protectedPaths = ['/levels', '/design', '/play'];
-    const isProtectedPath = protectedPaths.some(p => req.nextUrl.pathname.startsWith(p));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    // If the user is not signed in and the current path is a protected one, redirect to /login
-    if (!user && isProtectedPath) {
-      return NextResponse.redirect(new URL('/login', req.url))
-    }
-    
-    // Refresh the session if it's about to expire
-    await supabase.auth.getSession()
+  const protectedPaths = ['/levels', '/design', '/play'];
+  const isProtectedPath = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p));
 
-    return res
-  } catch (e) {
-    return NextResponse.next({
-      request: {
-        headers: req.headers,
-      },
-    })
+  if (!user && isProtectedPath) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
+  
+  if (user && ['/login', '/reset-password'].includes(request.nextUrl.pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/levels'
+      return NextResponse.redirect(url)
+  }
+
+
+  return supabaseResponse
 }

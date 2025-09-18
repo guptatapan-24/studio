@@ -60,7 +60,7 @@ export default function LoginPage() {
               view="sign_in"
               showLinks={true}
               providers={[]}
-              redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`}
+              redirectTo={`${new URL(location.href).origin}/auth/callback`}
             />
           </CardContent>
           <CardFooter className="justify-center text-sm">
