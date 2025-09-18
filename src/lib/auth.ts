@@ -32,6 +32,9 @@ export async function signIn(email: string, password: string):Promise<{error?: s
     await signInWithEmailAndPassword(auth, email, password);
     return {};
   } catch (error: any) {
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        return { error: "User not found. Please register." };
+    }
     return { error: error.message };
   }
 }
