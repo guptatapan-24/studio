@@ -38,7 +38,6 @@ export class Game {
   constructor(
     private mount: HTMLDivElement,
     private level: Level,
-    private isMobile: boolean,
     callbacks: {
         onStroke: () => void;
         onHoleComplete: () => void;
@@ -59,11 +58,11 @@ export class Game {
     this.camera = new THREE.PerspectiveCamera(60, this.mount.clientWidth / this.mount.clientHeight, 0.1, 1000);
     this.camera.position.set(this.level.startPosition[0], 5, this.level.startPosition[2] + 8);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: !this.isMobile });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = this.isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.mount.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -80,24 +79,21 @@ export class Game {
   }
 
   private addLights() {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     this.scene.add(ambientLight);
 
-    const spotLight = new THREE.SpotLight(0xffffff, 100);
-    spotLight.position.set(0, 15, 0); 
-    spotLight.angle = Math.PI / 4;
-    spotLight.penumbra = 0.5;
-    spotLight.decay = 2;
-    spotLight.distance = 50;
-
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.shadow.camera.near = 10;
-    spotLight.shadow.camera.far = 50;
-    
-    this.camera.add(spotLight);
-    this.scene.add(this.camera);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(-5, 10, 5);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.left = -25;
+    directionalLight.shadow.camera.right = 25;
+    directionalLight.shadow.camera.top = 25;
+    directionalLight.shadow.camera.bottom = -25;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 50;
+    this.scene.add(directionalLight);
   }
 
   private createLevel() {
@@ -132,8 +128,8 @@ export class Game {
       const obstacle = new THREE.Mesh(obsGeo, obsMat);
       obstacle.position.fromArray(obs.position);
       if (obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
-      obstacle.receiveShadow = true; // Obstacles don't need to cast shadows in this optimized setup
-      obstacle.castShadow = false;
+      obstacle.castShadow = true;
+      obstacle.receiveShadow = true;
       this.scene.add(obstacle);
       this.obstacles.push(obstacle);
     });
@@ -158,20 +154,17 @@ export class Game {
         const startPoint = this.ballMesh.position;
         const endPoint = startPoint.clone().add(this.aimDirection.clone().multiplyScalar(3));
         this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
-        this.aimLine.geometry.attributes.position.needsUpdate = true;
     }
   }
 
   public aimLeft() {
     if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
     this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
-    this.updateAimLine();
   }
 
   public aimRight() {
     if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
     this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
-    this.updateAimLine();
   }
 
   public startPowerCharge() {
@@ -231,7 +224,7 @@ export class Game {
     this.camera.aspect = this.mount.clientWidth / this.mount.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(window.devicePixelRatio);
   };
   
   private checkCollisions() {
@@ -291,6 +284,8 @@ export class Game {
   private update() {
     if (this.isGamePaused()) return;
     
+    this.updateAimLine();
+    
     const chargeSpeed = 0.75;
     if (this.isCharging) {
         const newPower = Math.min(this.chargePower + chargeSpeed, 100);
@@ -308,7 +303,6 @@ export class Game {
       if (this.ballVelocity.lengthSq() < 0.0001) {
           this.ballVelocity.set(0, 0, 0);
           this.isBallMoving = false;
-          this.updateAimLine();
       }
       
       // Out of bounds check
@@ -318,7 +312,6 @@ export class Game {
         this.ballMesh.position.fromArray(this.level.startPosition);
         this.ballVelocity.set(0, 0, 0);
         this.isBallMoving = false;
-        this.updateAimLine();
       }
     }
     
@@ -387,7 +380,6 @@ type GolfCanvasProps = {
 const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false, gameRef }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const isGamePausedRef = useRef(isGamePaused);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     isGamePausedRef.current = isGamePaused;
@@ -396,7 +388,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
   useEffect(() => {
     if (!mountRef.current) return;
 
-    const game = new Game(mountRef.current, level, isMobile, {
+    const game = new Game(mountRef.current, level, {
         onStroke,
         onHoleComplete,
         setPower,
@@ -416,11 +408,12 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, isMobile]); // Key change: This effect now ONLY re-runs if the level or device type changes.
+  }, [level]); // Key change: This effect now ONLY re-runs if the level changes.
 
   return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
 
 export default GolfCanvas;
 
+    
     
