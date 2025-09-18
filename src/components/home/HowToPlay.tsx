@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeftRight, Space, Mouse, Smartphone, Hand } from "lucide-react";
+import { Mouse, Smartphone, Hand, Keyboard } from "lucide-react";
 
 export function HowToPlay() {
   const isMobile = useIsMobile();
@@ -17,36 +18,33 @@ export function HowToPlay() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              {isMobile ? <Smartphone /> : <Mouse />}
-              Controls
+              {isMobile ? <Smartphone /> : <Keyboard />}
+              {isMobile ? "For Phones & Tablets" : "For PC & Laptop"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {isMobile ? (
               <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                 <li>
-                  <strong>Aim:</strong> Use the Left/Right arrow buttons to set
-                  direction.
+                  <strong>Aim:</strong> Use the on-screen Left/Right arrow buttons to set direction.
                 </li>
                 <li>
-                  <strong>Power:</strong> Hold and release the 'Power' button to shoot.
+                  <strong>Power:</strong> Press and hold the on-screen 'Power' button to charge your shot, then release to shoot.
                 </li>
                 <li>
-                  <strong>Camera:</strong> Use touch gestures (pinch, drag) to
-                  orbit, pan, and zoom.
+                  <strong>Camera:</strong> Use standard touch gestures (one-finger drag to orbit, two-finger pinch to zoom) to look around the course.
                 </li>
               </ul>
             ) : (
               <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                 <li>
-                  <strong>Aim:</strong> Use Left/Right arrow keys to set
-                  direction.
+                  <strong>Aim:</strong> Use the <strong>Left and Right arrow keys</strong> on your keyboard to set your direction.
                 </li>
                 <li>
-                  <strong>Power:</strong> Hold and release the Spacebar to shoot.
+                  <strong>Power:</strong> Press and hold the <strong>Spacebar</strong> to charge your shot, then release to shoot.
                 </li>
                 <li>
-                  <strong>Camera:</strong> Use mouse to orbit, pan, and zoom.
+                  <strong>Camera:</strong> Use your <strong>mouse</strong> to control the camera. Left-click and drag to orbit, right-click and drag to pan, and use the scroll wheel to zoom.
                 </li>
               </ul>
             )}
