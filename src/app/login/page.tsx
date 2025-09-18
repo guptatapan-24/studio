@@ -34,6 +34,7 @@ export default function LoginPage() {
               theme="dark"
               view="sign_in"
               showLinks={true}
+              providers={[]}
             />
           </CardContent>
           <CardFooter className="justify-center text-sm">
