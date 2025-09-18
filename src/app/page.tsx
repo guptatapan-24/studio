@@ -4,7 +4,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Bot, Camera, Layers, Mouse, Target, Keyboard } from 'lucide-react';
-import { GolfBallIcon } from '@/components/icons/GolfBallIcon';
 import { Header } from '@/components/layout/Header';
 import { HowToPlay } from '@/components/home/HowToPlay';
 
