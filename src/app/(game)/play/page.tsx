@@ -71,18 +71,22 @@ export default function PlayPage() {
     setGameKey(Date.now());
   }, [searchParams, router]);
 
+  // Effect to save score when hole is completed
+  useEffect(() => {
+    if (isHoleComplete && level && level.id !== 99) {
+      // Don't await, just fire and forget
+      updateBestScore(level.id, strokes);
+    }
+  }, [isHoleComplete, strokes, level]);
+
   const handleStroke = () => {
     if (isHoleComplete) return;
     setStrokes((prev) => prev + 1);
   };
 
-  const handleHoleComplete = async () => {
+  const handleHoleComplete = () => {
     if (!isHoleComplete) {
       setIsHoleComplete(true);
-      if (level && level.id !== 99) {
-        // Don't await, just fire and forget
-        updateBestScore(level.id, strokes + 1); // strokes is not yet updated, so add 1
-      }
     }
   };
 
