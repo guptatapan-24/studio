@@ -1,7 +1,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Bot, Camera, Layers, Mouse, Target, Keyboard } from 'lucide-react';
@@ -9,24 +8,19 @@ import { Header } from '@/components/layout/Header';
 import { HowToPlay } from '@/components/home/HowToPlay';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course');
-
   return (
     <div className="flex flex-col min-h-dvh bg-background">
       <Header />
 
       <main className="flex-1">
         <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
-          {heroImage && (
-            <Image
-              src={heroImage.imageUrl}
-              alt={heroImage.description}
-              fill
-              className="object-cover"
-              priority
-              data-ai-hint={heroImage.imageHint}
-            />
-          )}
+          <Image
+            src="/hero-background.jpg"
+            alt="A beautiful view of a golf course on a sunny day."
+            fill
+            className="object-cover"
+            priority
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">
