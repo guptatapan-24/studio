@@ -60,17 +60,10 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const protectedPaths = ['/levels', '/design', '/play'];
-  const authPaths = ['/login', '/reset-password'];
-
   const isProtectedPath = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p));
-  const isAuthPath = authPaths.some(p => request.nextUrl.pathname.startsWith(p));
 
   if (!user && isProtectedPath) {
     return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (user && isAuthPath) {
-    return NextResponse.redirect(new URL('/levels', request.url))
   }
 
   return response

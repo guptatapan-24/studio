@@ -28,7 +28,7 @@ export default function LoginPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (event === "SIGNED_IN") {
         router.push("/levels");
       }
     });
