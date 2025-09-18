@@ -17,6 +17,8 @@ export class Game {
   private holeMesh: THREE.Mesh;
   private obstacles: THREE.Mesh[] = [];
   private aimLine: THREE.Line;
+  private flagGroup: THREE.Group;
+
 
   // Game state
   private isBallMoving = false;
@@ -120,6 +122,26 @@ export class Game {
     this.holeMesh.position.fromArray(this.level.holePosition);
     this.holeMesh.rotation.x = -Math.PI / 2;
     this.scene.add(this.holeMesh);
+
+    // Flag
+    this.flagGroup = new THREE.Group();
+    const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.5, 8);
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+    const poleMesh = new THREE.Mesh(poleGeo, poleMat);
+    poleMesh.position.y = 0.75; // Half of height
+    poleMesh.castShadow = true;
+    this.flagGroup.add(poleMesh);
+
+    const flagGeo = new THREE.PlaneGeometry(0.6, 0.4);
+    const flagMat = new THREE.MeshStandardMaterial({ color: 0xff0000, side: THREE.DoubleSide });
+    const flagMesh = new THREE.Mesh(flagGeo, flagMat);
+    flagMesh.position.set(0.3, 1.2, 0); // Position relative to the pole top
+    this.flagGroup.add(flagMesh);
+    
+    this.flagGroup.position.fromArray(this.level.holePosition);
+    this.flagGroup.position.y = this.level.holePosition[1];
+    this.scene.add(this.flagGroup);
+
 
     // Obstacles
     this.level.obstacles.forEach(obs => {
@@ -327,6 +349,9 @@ export class Game {
             this.isBallMoving = false;
             this.isHoleCompleted = true;
             this.onHoleComplete();
+            if (this.flagGroup) {
+              this.flagGroup.visible = false;
+            }
         }
       }
     }
@@ -415,5 +440,4 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 
 export default GolfCanvas;
 
-    
     
