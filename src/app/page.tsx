@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle, ArrowRight, Mouse, Keyboard, Target, Camera, Bot, Layers } from 'lucide-react';
+import { ArrowRight, Bot, Camera, Layers, Mouse, Target, Keyboard } from 'lucide-react';
 import { GolfBallIcon } from '@/components/icons/GolfBallIcon';
 import { Header } from '@/components/layout/Header';
+import { HowToPlay } from '@/components/home/HowToPlay';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-golf-course');
@@ -45,49 +46,7 @@ export default function Home() {
         </section>
 
         <div className="container py-12 md:py-20 space-y-16">
-          <section id="how-to-play" className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-2">How to Play</h2>
-            <p className="text-center text-muted-foreground mb-8">Master the controls to conquer the course.</p>
-            <div className="mt-8 grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Controls</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                    <li>
-                      <strong>Aim:</strong> Use Left/Right arrow keys to set direction.
-                    </li>
-                    <li>
-                      <strong>Power:</strong> Hold and release the Spacebar to shoot.
-                    </li>
-                    <li>
-                      <strong>Camera:</strong> Use mouse or touch gestures to
-                      orbit, pan, and zoom.
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gameplay</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                    <li>
-                      Get the ball in the hole in as few strokes as possible.
-                    </li>
-                    <li>
-                      Complete a level to unlock the next one.
-                    </li>
-                    <li>
-                      Beat all 10 levels to become a minigolf champion!
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
+          <HowToPlay />
 
           <section id="requirements">
             <h2 className="text-3xl font-bold text-center mb-2">
