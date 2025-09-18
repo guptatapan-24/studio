@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,7 +26,7 @@ export default function Home() {
               data-ai-hint={heroImage.imageHint}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-shadow-lg">
               CloneFest 2025
