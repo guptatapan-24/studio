@@ -14,10 +14,7 @@ export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
       href: "/levels",
       label: "Levels",
     },
-    {
-      href: "/design",
-      label: "AI Designer",
-    },
+    
   ]
 
   const navClass = cn(

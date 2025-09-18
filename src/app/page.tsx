@@ -57,7 +57,7 @@ export default function Home() {
                 { title: 'Gameplay & State Management', description: 'Manage game state like hole, par, and strokes. Implement goal detection.', icon: <Target/> },
                 { title: 'Player Controls', description: 'Intuitive controls for aiming precision and power, with clear visual feedback.', icon: <Keyboard/> },
                 { title: 'Camera System', description: 'Interactive camera controls (orbit, pan, zoom) to inspect the course.', icon: <Camera/> },
-                { title: 'AI Design Tool', description: 'A tool for programmatically editing course design, tuned using generative AI.', icon: <Bot/> },
+
               ].map((item) => (
                 <Card key={item.title} className="flex flex-col">
                   <CardHeader>
@@ -84,13 +84,6 @@ export default function Home() {
                 Built for CloneFest 2025. An exercise in web-based 3D.
               </p>
             </div>
-            <Button variant="outline" asChild>
-                <Link
-                href="/design"
-                >
-                Try the AI Course Designer
-                </Link>
-            </Button>
           </div>
         </footer>
       </main>
