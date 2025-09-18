@@ -16,18 +16,12 @@ export default function Home() {
       <Header />
 
       <main className="flex-1">
-        <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
-          {heroImage && (
-            <Image
-              src={heroImage.imageUrl}
-              alt={heroImage.description}
-              fill
-              className="object-cover"
-              priority
-              quality={100}
-              data-ai-hint={heroImage.imageHint}
-            />
-          )}
+        <section
+          className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white bg-cover bg-center"
+          style={{
+            backgroundImage: heroImage ? `url(${heroImage.imageUrl})` : 'none',
+          }}
+        >
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
           <div className="relative z-10 p-4 max-w-4xl mx-auto flex flex-col items-center justify-center h-full">
               <h1 className="text-4xl md:text-6xl font-bold tracking-tighter [text-shadow:2px_2px_4px_rgba(0,0,0,0.5)]">
