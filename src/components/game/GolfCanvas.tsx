@@ -5,6 +5,7 @@ import React, { useRef, useEffect, MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Level } from '@/lib/levels';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // --- A dedicated class to manage the Three.js game world ---
 export class Game {
@@ -37,6 +38,7 @@ export class Game {
   constructor(
     private mount: HTMLDivElement,
     private level: Level,
+    private isMobile: boolean,
     callbacks: {
         onStroke: () => void;
         onHoleComplete: () => void;
@@ -57,11 +59,11 @@ export class Game {
     this.camera = new THREE.PerspectiveCamera(60, this.mount.clientWidth / this.mount.clientHeight, 0.1, 1000);
     this.camera.position.set(this.level.startPosition[0], 5, this.level.startPosition[2] + 8);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: false });
+    this.renderer = new THREE.WebGLRenderer({ antialias: !this.isMobile });
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.type = this.isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.mount.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -74,6 +76,7 @@ export class Game {
     this.addLights();
     this.createLevel();
     this.bindEventHandlers();
+    this.updateAimLine();
   }
 
   private addLights() {
@@ -129,7 +132,8 @@ export class Game {
       const obstacle = new THREE.Mesh(obsGeo, obsMat);
       obstacle.position.fromArray(obs.position);
       if (obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
-      obstacle.receiveShadow = true;
+      obstacle.receiveShadow = true; // Obstacles don't need to cast shadows in this optimized setup
+      obstacle.castShadow = false;
       this.scene.add(obstacle);
       this.obstacles.push(obstacle);
     });
@@ -294,8 +298,6 @@ export class Game {
         this.setPower(newPower);
     }
     
-    this.updateAimLine();
-    
     if (this.isBallMoving) {
       // Apply new position
       this.ballMesh.position.add(this.ballVelocity);
@@ -306,6 +308,7 @@ export class Game {
       if (this.ballVelocity.lengthSq() < 0.0001) {
           this.ballVelocity.set(0, 0, 0);
           this.isBallMoving = false;
+          this.updateAimLine();
       }
       
       // Out of bounds check
@@ -315,6 +318,7 @@ export class Game {
         this.ballMesh.position.fromArray(this.level.startPosition);
         this.ballVelocity.set(0, 0, 0);
         this.isBallMoving = false;
+        this.updateAimLine();
       }
     }
     
@@ -383,6 +387,7 @@ type GolfCanvasProps = {
 const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete, setPower, isGamePaused = false, gameRef }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const isGamePausedRef = useRef(isGamePaused);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     isGamePausedRef.current = isGamePaused;
@@ -391,7 +396,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
   useEffect(() => {
     if (!mountRef.current) return;
 
-    const game = new Game(mountRef.current, level, {
+    const game = new Game(mountRef.current, level, isMobile, {
         onStroke,
         onHoleComplete,
         setPower,
@@ -411,7 +416,7 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level]); // Key change: This effect now ONLY re-runs if the level itself changes.
+  }, [level, isMobile]); // Key change: This effect now ONLY re-runs if the level or device type changes.
 
   return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full" />;
 };
