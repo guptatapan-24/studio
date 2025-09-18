@@ -24,16 +24,16 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-6">
             <GolfFlagIcon className="h-10 w-10 mb-4" />
             <h1 className="text-2xl font-bold">Welcome to Web Golf</h1>
-            <p className="text-muted-foreground">Sign in to continue</p>
+            <p className="text-muted-foreground">Sign in or create an account</p>
         </div>
         <Card>
           <CardContent className="p-6">
             <Auth
               supabaseClient={supabase}
               appearance={{ theme: ThemeSupa }}
-              providers={[]}
               theme="dark"
-              showLinks={false}
+              view="sign_in"
+              showLinks={true}
             />
           </CardContent>
           <CardFooter className="justify-center text-sm">
@@ -49,3 +49,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
