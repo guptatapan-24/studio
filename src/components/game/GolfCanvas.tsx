@@ -57,11 +57,11 @@ export class Game {
     this.camera = new THREE.PerspectiveCamera(60, this.mount.clientWidth / this.mount.clientHeight, 0.1, 1000);
     this.camera.position.set(this.level.startPosition[0], 5, this.level.startPosition[2] + 8);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false });
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.mount.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -80,9 +80,8 @@ export class Game {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
     this.scene.add(ambientLight);
 
-    // More performant spotlight that follows the camera
     const spotLight = new THREE.SpotLight(0xffffff, 100);
-    spotLight.position.set(0, 15, 0); // Relative to camera
+    spotLight.position.set(0, 15, 0); 
     spotLight.angle = Math.PI / 4;
     spotLight.penumbra = 0.5;
     spotLight.decay = 2;
@@ -94,9 +93,8 @@ export class Game {
     spotLight.shadow.camera.near = 10;
     spotLight.shadow.camera.far = 50;
     
-    // Add the light to the camera, not the scene
     this.camera.add(spotLight);
-    this.scene.add(this.camera); // Add camera to scene so its children are visible
+    this.scene.add(this.camera);
   }
 
   private createLevel() {
@@ -112,7 +110,7 @@ export class Game {
     const ballGeo = new THREE.SphereGeometry(0.15, 32, 16);
     const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.1 });
     this.ballMesh = new THREE.Mesh(ballGeo, ballMat);
-    this.ballMesh.castShadow = true; // The ball is the only object casting shadows now
+    this.ballMesh.castShadow = true;
     this.ballMesh.position.fromArray(this.level.startPosition);
     this.scene.add(this.ballMesh);
 
@@ -131,7 +129,7 @@ export class Game {
       const obstacle = new THREE.Mesh(obsGeo, obsMat);
       obstacle.position.fromArray(obs.position);
       if (obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
-      obstacle.receiveShadow = true; // Obstacles only receive shadows
+      obstacle.receiveShadow = true;
       this.scene.add(obstacle);
       this.obstacles.push(obstacle);
     });
@@ -150,14 +148,26 @@ export class Game {
     window.addEventListener('resize', this.handleResize);
   }
 
+  private updateAimLine() {
+    this.aimLine.visible = !this.isBallMoving && !this.isHoleCompleted;
+    if (this.aimLine.visible) {
+        const startPoint = this.ballMesh.position;
+        const endPoint = startPoint.clone().add(this.aimDirection.clone().multiplyScalar(3));
+        this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
+        this.aimLine.geometry.attributes.position.needsUpdate = true;
+    }
+  }
+
   public aimLeft() {
     if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
     this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 45);
+    this.updateAimLine();
   }
 
   public aimRight() {
     if (this.isGamePaused() || this.isBallMoving || this.isHoleCompleted) return;
     this.aimDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 45);
+    this.updateAimLine();
   }
 
   public startPowerCharge() {
@@ -284,13 +294,7 @@ export class Game {
         this.setPower(newPower);
     }
     
-    this.aimLine.visible = !this.isBallMoving && !this.isHoleCompleted;
-    if(this.aimLine.visible) {
-        const startPoint = this.ballMesh.position;
-        const endPoint = startPoint.clone().add(this.aimDirection.clone().multiplyScalar(3));
-        this.aimLine.geometry.setFromPoints([startPoint, endPoint]);
-        this.aimLine.geometry.attributes.position.needsUpdate = true;
-    }
+    this.updateAimLine();
     
     if (this.isBallMoving) {
       // Apply new position
