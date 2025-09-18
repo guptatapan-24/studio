@@ -1,10 +1,12 @@
 
+
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -14,9 +16,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GolfFlagIcon } from "@/components/icons/GolfFlagIcon";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const message = searchParams.get("message");
 
   return (
     <div className="min-h-dvh w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 p-4">
@@ -26,6 +31,11 @@ export default function LoginPage() {
             <h1 className="text-2xl font-bold">Welcome to Web Golf</h1>
             <p className="text-muted-foreground">Sign in or create an account</p>
         </div>
+        {message && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
         <Card>
           <CardContent className="p-6">
             <Auth
@@ -50,4 +60,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
