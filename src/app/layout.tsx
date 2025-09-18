@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { GolfFlagIcon } from '@/components/icons/GolfFlagIcon';
-import { AuthProvider } from '@/app/providers/auth-provider';
 
 export const metadata: Metadata = {
   title: 'Web Golf',
@@ -41,10 +40,8 @@ export default function RootLayout({
         `}</style>
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
           {children}
           <Toaster />
-        </AuthProvider>
       </body>
     </html>
   );

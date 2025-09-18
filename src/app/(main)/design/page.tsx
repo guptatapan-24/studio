@@ -4,7 +4,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/form";
 import { Loader2, Wand2, Play } from 'lucide-react';
 import type { Level } from '@/lib/levels';
-import { useAuth } from '@/hooks/use-auth';
 
 const GolfCanvas = dynamic(() => import('@/components/game/GolfCanvas'), {
   ssr: false,
@@ -67,18 +66,11 @@ async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 2000, finalEr
 
 export default function DesignPage() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuth();
   const [isDesigning, setIsDesigning] = useState(false);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [designResult, setDesignResult] = useState<CourseDesignOutput | null>(null);
   const [visualizationResult, setVisualizationResult] = useState<Level | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isAuthLoading && !user) {
-      router.push('/login');
-    }
-  }, [isAuthLoading, user, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -148,15 +140,6 @@ export default function DesignPage() {
       localStorage.setItem('customLevel', JSON.stringify(visualizationResult));
     }
   };
-
-  if (isAuthLoading || !user) {
-    return (
-      <div className="container py-8 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="ml-4 text-muted-foreground">Loading designer...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="container py-8">
@@ -327,5 +310,3 @@ export default function DesignPage() {
     </div>
   );
 }
-
-    
