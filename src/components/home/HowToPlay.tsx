@@ -2,17 +2,38 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mouse, Smartphone, Hand, Keyboard } from "lucide-react";
+import { Mouse, Smartphone, Hand, Keyboard, Target } from "lucide-react";
 
 export function HowToPlay() {
 
   return (
-    <section id="how-to-play" className="max-w-4xl mx-auto">
+    <section id="how-to-play" className="max-w-6xl mx-auto">
       <h2 className="text-3xl font-bold text-center mb-2">How to Play</h2>
       <p className="text-center text-muted-foreground mb-8">
         Master the controls to conquer the course.
       </p>
-      <div className="mt-8 grid md:grid-cols-2 gap-6">
+      <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <Target />
+              Gameplay
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+              <li>
+                <strong>Objective:</strong> Get the golf ball into the hole in as few strokes as possible.
+              </li>
+              <li>
+                <strong>Par:</strong> Each hole has a 'Par' score, which is the target number of strokes.
+              </li>
+              <li>
+                <strong>Camera:</strong> Use your mouse or touch gestures to look around the course before your shot.
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
