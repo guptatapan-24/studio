@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -6,16 +7,28 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { levels } from '@/lib/levels';
-import { Play } from 'lucide-react';
+import { Play, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LevelsPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   
   useEffect(() => {
-    // This is a placeholder for if you wanted to track completed levels.
-    // For now, we just unlock everything.
-  }, []);
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [isLoading, user, router]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="container py-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="ml-4 text-muted-foreground">Loading levels...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">

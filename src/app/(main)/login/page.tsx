@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -113,9 +114,9 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            New user?{' '}
             <Link href="/register" className="text-primary hover:underline">
-              Register
+              Create an account
             </Link>
           </p>
         </CardFooter>
