@@ -59,6 +59,7 @@ export class Game {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.mount.appendChild(this.renderer.domElement);
 
@@ -85,8 +86,8 @@ export class Game {
     dirLight.shadow.camera.bottom = -15;
     dirLight.shadow.camera.left = -15;
     dirLight.shadow.camera.right = 15;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
     this.scene.add(dirLight);
   }
 
@@ -209,6 +210,7 @@ export class Game {
     this.camera.aspect = this.mount.clientWidth / this.mount.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   };
   
   private checkCollisions() {
@@ -404,3 +406,5 @@ const GolfCanvas: React.FC<GolfCanvasProps> = ({ level, onStroke, onHoleComplete
 };
 
 export default GolfCanvas;
+
+    
