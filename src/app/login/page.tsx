@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -16,28 +16,11 @@ import {
 } from "@/components/ui/card";
 import { GolfFlagIcon } from "@/components/icons/GolfFlagIcon";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useEffect } from "react";
 
 export default function LoginPage() {
   const supabase = createClient();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const message = searchParams.get("message");
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        router.push("/levels");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router, supabase]);
-
 
   return (
     <div className="min-h-dvh w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 p-4">
@@ -61,6 +44,7 @@ export default function LoginPage() {
               view="sign_in"
               showLinks={true}
               providers={[]}
+              redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`}
             />
           </CardContent>
           <CardFooter className="justify-center text-sm">
