@@ -18,8 +18,8 @@ export function MobileControls({
   onPowerChargeRelease,
 }: MobileControlsProps) {
   return (
-    <div className="lg:hidden absolute bottom-4 w-full px-4 z-10">
-      <div className="w-full max-w-sm mx-auto flex justify-between items-center">
+    <div className="lg:hidden absolute bottom-4 w-full px-4 z-10 select-none">
+      <div className="flex justify-between items-end">
         {/* Aim Controls */}
         <div className="flex gap-2">
           <Button
