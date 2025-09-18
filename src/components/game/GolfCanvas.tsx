@@ -61,6 +61,7 @@ export class Game {
     this.renderer.setSize(this.mount.clientWidth, this.mount.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
     this.mount.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -76,19 +77,26 @@ export class Game {
   }
 
   private addLights() {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
     this.scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    dirLight.position.set(10, 20, 5);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 15;
-    dirLight.shadow.camera.bottom = -15;
-    dirLight.shadow.camera.left = -15;
-    dirLight.shadow.camera.right = 15;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    this.scene.add(dirLight);
+    // More performant spotlight that follows the camera
+    const spotLight = new THREE.SpotLight(0xffffff, 100);
+    spotLight.position.set(0, 15, 0); // Relative to camera
+    spotLight.angle = Math.PI / 4;
+    spotLight.penumbra = 0.5;
+    spotLight.decay = 2;
+    spotLight.distance = 50;
+
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.shadow.camera.near = 10;
+    spotLight.shadow.camera.far = 50;
+    
+    // Add the light to the camera, not the scene
+    this.camera.add(spotLight);
+    this.scene.add(this.camera); // Add camera to scene so its children are visible
   }
 
   private createLevel() {
@@ -104,7 +112,7 @@ export class Game {
     const ballGeo = new THREE.SphereGeometry(0.15, 32, 16);
     const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.1 });
     this.ballMesh = new THREE.Mesh(ballGeo, ballMat);
-    this.ballMesh.castShadow = true;
+    this.ballMesh.castShadow = true; // The ball is the only object casting shadows now
     this.ballMesh.position.fromArray(this.level.startPosition);
     this.scene.add(this.ballMesh);
 
@@ -123,8 +131,7 @@ export class Game {
       const obstacle = new THREE.Mesh(obsGeo, obsMat);
       obstacle.position.fromArray(obs.position);
       if (obs.rotation) obstacle.rotation.fromArray(obs.rotation as [number, number, number]);
-      obstacle.castShadow = true;
-      obstacle.receiveShadow = true;
+      obstacle.receiveShadow = true; // Obstacles only receive shadows
       this.scene.add(obstacle);
       this.obstacles.push(obstacle);
     });
