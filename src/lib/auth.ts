@@ -1,13 +1,13 @@
 
 "use server";
 
-import {
+import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { auth, db } from "./firebase";
 import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
 export async function signUp(email: string, password: string, displayName: string):Promise<{error?: string}> {
   try {
